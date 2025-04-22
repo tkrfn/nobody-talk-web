@@ -1,6 +1,8 @@
 // src/app/thread/[id]/page.tsx
 import { supabase } from '@/supabase/supabase'
 import { CommentCard } from '@/components/CommentCard'
+import { CommentForm } from '@/components/CommentForm'
+import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,7 +31,6 @@ export default async function ThreadDetailPage({ params }: Props) {
 
   return (
     <main className="max-w-md mx-auto px-4 pt-6 pb-10 space-y-6">
-      {/* スレッド本体 */}
       <section className="bg-card border border-white/10 rounded-xl p-4 space-y-2">
         <h1 className="text-xl font-bold text-text">{thread.title}</h1>
         <p className="text-base leading-relaxed text-text whitespace-pre-wrap">{thread.body}</p>
@@ -38,16 +39,35 @@ export default async function ThreadDetailPage({ params }: Props) {
         </p>
       </section>
 
-      {/* コメント一覧 */}
+      <section>
+        <CommentForm action={addComment.bind(null, threadId)} />
+      </section>
+
       <section className="space-y-4">
-        {comments?.length ? (
-          comments.map((comment) => (
-            <CommentCard key={comment.id} comment={comment} />
-          ))
-        ) : (
-          <p className="text-subtext text-sm text-center">コメントはまだありません</p>
-        )}
+        {comments?.map((comment) => (
+          <CommentCard key={comment.id} comment={comment} />
+        ))}
       </section>
     </main>
   )
+}
+
+// ✅ Server Action（このファイル内）
+async function addComment(threadId: string, formData: FormData) {
+  'use server'
+
+  const body = formData.get('body') as string
+  if (!body) return
+
+  const { error } = await supabase.from('comments').insert({
+    thread_id: threadId,
+    body,
+  })
+
+  if (error) {
+    console.error('コメント投稿エラー:', error.message)
+    return
+  }
+
+  revalidatePath(`/thread/${threadId}`)
 }
