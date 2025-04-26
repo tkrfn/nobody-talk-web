@@ -1,25 +1,18 @@
 // src/lib/comment-actions.ts
 'use server'
-
-import { supabase } from '@/supabase/supabase'
+import { createServerActionClient } from '@supabase/auth-helpers-nextjs'
+import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 
-export async function addComment(threadId: string, formData: FormData) {
-  const body = formData.get('body') as string
-  if (!body || !threadId) {
-    console.error('コメント本文またはスレッドIDが不足しています')
-    return
-  }
+export async function createComment(formData: FormData) {
+  const supabase = createServerActionClient({ cookies })
+  const thread_id = formData.get('thread_id')?.toString() || ''
+  const body      = formData.get('body')?.toString()      || ''
 
-  const { error } = await supabase.from('comments').insert({
-    thread_id: threadId,
-    body,
-  })
+  await supabase
+    .from('comments')
+    .insert({ thread_id, body })
 
-  if (error) {
-    console.error('コメント投稿エラー:', error.message)
-    return
-  }
-
-  revalidatePath(`/thread/${threadId}`)
+  // コメント追加後、同ページを再検証
+  revalidatePath(`/thread/${thread_id}`)
 }

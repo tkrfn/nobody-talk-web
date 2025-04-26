@@ -1,41 +1,54 @@
+// src/components/CommentForm.tsx
+
 'use client'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabaseClient'
 
-import { useFormStatus } from 'react-dom'
-import { useRef } from 'react'
-import { Button } from './Button'
+export default function CommentForm({ threadId }: { threadId: string }) {
+  const [body, setBody] = useState('')
 
-type Props = {
-  action: (formData: FormData) => void
-}
+  // マウント時ログ
+  useEffect(() => {
+    console.log('CommentForm mounted, threadId:', threadId)
+  }, [threadId])
 
-export function CommentForm({ action }: Props) {
-  const { pending } = useFormStatus()
-  const formRef = useRef<HTMLFormElement>(null)
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    console.log('handleSubmit called, body:', body)
 
-  const handleSubmit = () => {
-    setTimeout(() => {
-      const target = document.getElementById('comment-list-end')
-      target?.scrollIntoView({ behavior: 'smooth' })
-    }, 100)
+    if (!body.trim()) {
+      console.warn('コメントが空です')
+      return
+    }
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({ thread_id: threadId, body })
+      .select()
+
+    console.log('Supabase insert:', { data, error })
+
+    if (error) {
+      console.error('コメント投稿エラー:', error)
+    } else {
+      setBody('')
+      // 成功後リロード
+      window.location.reload()
+    }
   }
 
   return (
-    <form
-      ref={formRef}
-      action={action} // ← これでOK！
-      onSubmit={handleSubmit} // ← submit後の補助処理だけ別に
-      className="space-y-3"
-    >
+    <form onSubmit={handleSubmit} className="mt-4 space-y-2 bg-gray-800 p-4 rounded">
       <textarea
         name="body"
-        placeholder="コメントを入力"
-        required
-        rows={3}
-        className="w-full bg-surface border border-white/20 rounded-lg px-4 py-3 text-text placeholder-subtext text-base focus:outline-none focus:ring-1 focus:ring-primary resize-none"
+        placeholder="コメントを入力…"
+        value={body}
+        onChange={(e) => setBody(e.target.value)}
+        className="w-full px-3 py-2 rounded bg-gray-700 text-white"
       />
-      <Button type="submit" disabled={pending}>
-        {pending ? '投稿中...' : 'コメントを投稿'}
-      </Button>
+      <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+        コメントを投稿
+      </button>
     </form>
   )
 }

@@ -2,50 +2,36 @@
 'use client'
 
 import { useState } from 'react'
-import { ThreadForm } from './ThreadForm'
-import { CommentForm } from './CommentForm'
-import { createThread } from '@/lib/actions'
-import { addComment } from '@/lib/comment-actions'
+import { usePathname } from 'next/navigation'
+import Modal from '@/components/Modal'
+import ThreadForm from '@/components/ThreadForm'
+import CommentForm from '@/components/CommentForm'
+import { FiPlus } from 'react-icons/fi'
 
-type Props = {
-  threadId?: string
-}
-
-export function FAB({ threadId }: Props) {
+export default function FAB() {
   const [isOpen, setIsOpen] = useState(false)
+  const pathname = usePathname()
+  const threadMatch = pathname.match(/^\/thread\/(?<id>[^/]+)/)
+  const threadId = threadMatch?.groups?.id ?? null
 
   return (
     <>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="
-          fixed bottom-5 right-5 z-50
-          w-12 h-12 rounded-full
-          bg-primary text-white text-2xl
-          flex items-center justify-center
-          shadow-lg hover:scale-105 transition
-        "
-      >
-        ＋
-      </button>
+      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
+        {threadId ? (
+          // スレッド詳細ページではコメント投稿フォームを表示
+          <CommentForm threadId={threadId} />
+        ) : (
+          // それ以外のページではスレッド投稿フォームを表示
+          <ThreadForm />
+        )}
+      </Modal>
 
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40">
-          <div className="bg-card rounded-xl w-11/12 max-w-sm p-4 space-y-4">
-            {threadId ? (
-              <CommentForm action={addComment.bind(null, threadId)} />
-            ) : (
-              <ThreadForm action={createThread} />
-            )}
-            <button
-              onClick={() => setIsOpen(false)}
-              className="block w-full text-center py-3 text-sm text-subtext hover:opacity-80"
-            >
-              閉じる
-            </button>
-          </div>
-        </div>
-      )}
+      <button
+        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        onClick={() => setIsOpen(true)}
+      >
+        <FiPlus size={24} />
+      </button>
     </>
   )
 }

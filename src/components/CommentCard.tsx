@@ -1,44 +1,23 @@
-// src/components/CommentCard.tsx
-'use client'
+import React from 'react'
+import LikeButton from '@/components/LikeButton'
 
-import { useTransition } from 'react'
-import { addLike } from '@/lib/like-actions'
-import { Button } from './Button'
-import { Heart } from 'lucide-react'
-
-type Comment = {
+export interface Comment {
   id: string
   body: string
   created_at: string
-  like_count: number
-  thread_id: string
+  user_id: string
 }
 
-export function CommentCard({ comment }: { comment: Comment }) {
-  const [isPending, startTransition] = useTransition()
-
-  const handleLike = () => {
-    startTransition(() => {
-      addLike(comment.id, comment.thread_id)
-    })
-  }
-
+export default function CommentCard({ comment }: { comment: Comment }) {
   return (
-    <div className="bg-surface border border-white/10 rounded-lg p-3 space-y-2">
-      <p className="text-sm text-text whitespace-pre-wrap">{comment.body}</p>
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-subtext">
-          {new Date(comment.created_at).toLocaleString('ja-JP')}
-        </span>
-        <button
-          onClick={handleLike}
-          disabled={isPending}
-          className="flex items-center text-sm text-primary hover:opacity-80 disabled:opacity-30 space-x-1"
-        >
-          <Heart size={16} />
-          <span>{comment.like_count}</span>
-        </button>
+    <div className="p-3 bg-gray-700 rounded mb-2 flex justify-between items-start">
+      <div className="flex-1">
+        <p className="text-gray-200 whitespace-pre-wrap">{comment.body}</p>
+        <div className="text-xs text-gray-400 mt-1">
+          {new Date(comment.created_at).toLocaleString()}
+        </div>
       </div>
+      <LikeButton commentId={comment.id} />
     </div>
   )
 }

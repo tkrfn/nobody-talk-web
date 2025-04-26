@@ -1,83 +1,66 @@
 // src/app/thread/[id]/page.tsx
 import Link from 'next/link'
-import { supabase } from '@/supabase/supabase'
-import { CommentCard } from '@/components/CommentCard'
-import { FAB } from '@/components/FAB'
-import { revalidatePath } from 'next/cache'
+import FAB from '@/components/FAB'
+import { supabase } from '@/lib/supabaseClient'
+import CommentCard from '@/components/CommentCard'
 
-export const dynamic = 'force-dynamic'
-
-type Props = {
-  params: Promise<{ id: string }>
+interface Thread {
+  id: string
+  title: string
+  body: string
+  created_at: string
 }
 
-export default async function ThreadDetailPage({ params }: Props) {
-  const { id: threadId } = await params
+interface Comment {
+  id: string
+  body: string
+  created_at: string
+  user_id: string
+}
+
+export default async function ThreadPage(props: { params: { id: string } }) {
+  const { id } = await props.params
 
   // スレッド取得
   const { data: thread } = await supabase
-    .from('threads')
+    .from<Thread>('threads')
     .select('*')
-    .eq('id', threadId)
+    .eq('id', id)
     .single()
 
-  // コメント取得 + いいね数
+  // コメント一覧取得
   const { data: comments } = await supabase
-    .from('comments')
-    .select('*, likes(count)')
-    .eq('thread_id', threadId)
+    .from<Comment>('comments')
+    .select('*')
+    .eq('thread_id', id)
     .order('created_at', { ascending: true })
 
-  const commentsWithLikes = (comments ?? []).map((c: any) => ({
-    ...c,
-    like_count: c.likes?.[0]?.count ?? 0,
-    thread_id: threadId,
-  }))
-
-  if (!thread) {
-    return <div className="text-center text-subtext">スレッドが見つかりません</div>
-  }
-
   return (
-    <main className="max-w-md mx-auto px-4 pt-6 pb-10 space-y-6">
-      {/* 戻るリンク */}
-      <div className="pb-2">
-        <Link href="/" className="inline-flex items-center text-sm text-primary hover:underline">
-          ← スレッド一覧に戻る
+    <>
+      <main className="max-w-md mx-auto p-4">
+        {/* 戻るリンク */}
+        <Link href="/" className="text-sm text-blue-400 mb-4 inline-block">
+          &larr; 一覧に戻る
         </Link>
-      </div>
 
-      {/* スレッド本体 */}
-      <section className="bg-card border border-white/10 rounded-xl p-4 space-y-2">
-        <h1 className="text-xl font-bold text-text">{thread.title}</h1>
-        <p className="text-base leading-relaxed text-text whitespace-pre-wrap">
-          {thread.body}
-        </p>
-        <p className="text-xs text-subtext">
-          {new Date(thread.created_at).toLocaleString('ja-JP')}
-        </p>
-      </section>
+        {/* スレッド本文 */}
+        <div className="p-4 bg-gray-800 rounded-lg mb-6">
+          <h1 className="text-lg font-bold text-white">{thread?.title}</h1>
+          <p className="mt-2 text-gray-300 whitespace-pre-wrap">{thread?.body}</p>
+        </div>
 
-      {/* コメント一覧 */}
-      <section className="space-y-4">
-        {commentsWithLikes.map((comment) => (
-          <CommentCard key={comment.id} comment={comment} />
-        ))}
-        <div id="comment-list-end" />
-      </section>
+        {/* コメント一覧 */}
+        <div className="space-y-2">
+          {comments?.map((c) => (
+            <CommentCard key={c.id} comment={c} />
+          ))}
+        </div>
 
-      {/* 右下の＋ボタン（コメント投稿用FAB） */}
-      <FAB threadId={threadId} />
-    </main>
+        {/* コメント投稿は右下のFABボタンから行います */}
+      </main>
+
+      {/* 右下の + ボタン(コメント投稿フォームを開く) */}
+      <FAB />
+    </>
   )
-}
-
-// サーバーアクション：コメント追加
-async function addComment(threadId: string, formData: FormData) {
-  'use server'
-  const body = formData.get('body') as string
-  if (!body) return
-  const { error } = await supabase.from('comments').insert({ thread_id: threadId, body })
-  if (error) console.error('コメント投稿エラー:', error.message)
-  revalidatePath(`/thread/${threadId}`)
 }

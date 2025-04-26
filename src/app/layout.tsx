@@ -1,23 +1,28 @@
-// src/app/layout.tsx
+// ────────────────────────────────────────────────────
+// layout.tsx
+// 既存ファイルを丸ごと上書きして、SupabaseProvider をラップ
+// ────────────────────────────────────────────────────
+
 import './globals.css'
-import { ReactNode } from 'react'
+import SupabaseProvider from './SupabaseProvider'
 
 export const metadata = {
-  title: 'nobody-talk',
-  description: '匿名で誰にも言えない話を共有する掲示板',
+  title: 'Nobody Talk',
+  description: '匿名で語り合う掲示板',
 }
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="ja">
-      <head>
-        {/* Google Font */}
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body>{children}</body>
+      <body>
+        <SupabaseProvider>
+          {children}
+        </SupabaseProvider>
+      </body>
     </html>
   )
 }
