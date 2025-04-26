@@ -1,37 +1,29 @@
 // src/components/FAB.tsx
 'use client'
-
-import { useState } from 'react'
-import { usePathname } from 'next/navigation'
-import Modal from '@/components/Modal'
-import ThreadForm from '@/components/ThreadForm'
-import CommentForm from '@/components/CommentForm'
-import { FiPlus } from 'react-icons/fi'
+import React, { useState } from 'react'
+import { IoAdd } from 'react-icons/io5'
+import Modal from './Modal'
+import ThreadForm from './ThreadForm'
 
 export default function FAB() {
   const [isOpen, setIsOpen] = useState(false)
-  const pathname = usePathname()
-  const threadMatch = pathname.match(/^\/thread\/(?<id>[^/]+)/)
-  const threadId = threadMatch?.groups?.id ?? null
+  const open = () => setIsOpen(true)
+  const close = () => setIsOpen(false)
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={() => setIsOpen(false)}>
-        {threadId ? (
-          // スレッド詳細ページではコメント投稿フォームを表示
-          <CommentForm threadId={threadId} />
-        ) : (
-          // それ以外のページではスレッド投稿フォームを表示
-          <ThreadForm />
-        )}
-      </Modal>
-
       <button
-        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        onClick={() => setIsOpen(true)}
+        onClick={open}
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-pink-500 text-white shadow-lg hover:bg-pink-600"
       >
-        <FiPlus size={24} />
+        <IoAdd size={28} />
       </button>
+
+      {isOpen && (
+        <Modal onClose={close}>
+          <ThreadForm onSuccess={close} />
+        </Modal>
+      )}
     </>
   )
 }

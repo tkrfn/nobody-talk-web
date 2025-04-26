@@ -1,10 +1,9 @@
-// ────────────────────────────────────────────────────
-// layout.tsx
-// 既存ファイルを丸ごと上書きして、SupabaseProvider をラップ
-// ────────────────────────────────────────────────────
-
+// src/app/layout.tsx
 import './globals.css'
 import SupabaseProvider from './SupabaseProvider'
+import Header from '@/components/Header'
+import Footer from '@/components/Footer'
+import FAB from '@/components/FAB'
 
 export const metadata = {
   title: 'Nobody Talk',
@@ -18,10 +17,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body>
-        <SupabaseProvider>
+      <body className="flex flex-col min-h-screen relative">
+        <SupabaseProvider />
+        <Header />
+        <main className="flex-1">
           {children}
-        </SupabaseProvider>
+        </main>
+        {/* FAB を全ページ共通で表示 */}
+        <FAB />
+        <Footer />
       </body>
     </html>
   )

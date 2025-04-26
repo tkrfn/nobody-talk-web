@@ -1,61 +1,70 @@
-// ────────────────────────────────────────────────────
 // src/components/ThreadForm.tsx
-// “use client” でクライアントレンダリングに切り替え
-// Supabase の anon-JWT 付きで直接 insert を呼ぶ
-// ────────────────────────────────────────────────────
 'use client'
+import React, { useState } from 'react'
+import { createThread } from '@/lib/thread-service'
+import { useRouter } from 'next/navigation'
 
-import { useState } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+type ThreadFormProps = {
+  onSuccess: () => void
+}
 
-export default function ThreadForm() {
+export default function ThreadForm({ onSuccess }: ThreadFormProps) {
   const [title, setTitle] = useState('')
-  const [body, setBody]   = useState('')
+  const [body, setBody] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter()
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    // supabase.auth.token が localStorage にあるので auth.uid() が効いて user_id に入る
-    const { data, error } = await supabase
-      .from('threads')
-      .insert({ title, body })
-
-    if (error) {
-      console.error('投稿エラー:', error)
-      return
+    setIsSubmitting(true)
+    try {
+      await createThread({ title, body })
+      setTitle('')
+      setBody('')
+      onSuccess()
+      router.refresh()
+    } catch (error) {
+      console.error(error)
+      alert('投稿に失敗しました。')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    // 投稿成功したらフォームをクリアして一覧をリロード
-    setTitle('')
-    setBody('')
-    // 最も簡単な再描画方法
-    window.location.reload()
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-2">
-      <input
-        type="text"
-        name="title"
-        placeholder="タイトル"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        required
-        className="w-full px-3 py-2 border rounded"
-      />
-      <textarea
-        name="body"
-        placeholder="本文"
-        value={body}
-        onChange={(e) => setBody(e.target.value)}
-        required
-        className="w-full px-3 py-2 border rounded h-24"
-      />
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+          タイトル
+        </label>
+        <input
+          id="title"
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+        />
+      </div>
+      <div>
+        <label htmlFor="body" className="block text-sm font-medium text-gray-700">
+          本文
+        </label>
+        <textarea
+          id="body"
+          rows={4}
+          value={body}
+          onChange={e => setBody(e.target.value)}
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+        />
+      </div>
       <button
         type="submit"
-        className="px-4 py-2 bg-blue-600 text-white rounded"
+        disabled={isSubmitting}
+        className="w-full bg-pink-500 hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded"
       >
-        投稿する
+        {isSubmitting ? '投稿中…' : '投稿する'}
       </button>
     </form>
   )

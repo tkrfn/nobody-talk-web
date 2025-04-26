@@ -1,40 +1,24 @@
+// src/components/Modal.tsx
 'use client'
+import React from 'react'
 
-import { ReactNode } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-
-interface ModalProps {
-  isOpen: boolean
+type ModalProps = {
+  children: React.ReactNode
   onClose: () => void
-  children: ReactNode
 }
 
-export default function Modal({ isOpen, onClose, children }: ModalProps) {
+export default function Modal({ children, onClose }: ModalProps) {
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg w-full max-w-md mx-4 overflow-hidden relative">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
         >
-          <motion.div
-            className="relative bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-xl w-80"
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-          >
-            <button
-              className="absolute top-3 right-3 text-gray-500 hover:text-gray-800 dark:hover:text-white"
-              onClick={onClose}
-            >
-              ✕
-            </button>
-            {children}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          ×
+        </button>
+        <div className="p-6">{children}</div>
+      </div>
+    </div>
   )
 }
