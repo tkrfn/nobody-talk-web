@@ -6,7 +6,10 @@ import { revalidatePath } from 'next/cache'
 
 export async function addComment(threadId: string, formData: FormData) {
   const body = formData.get('body') as string
-  if (!body) return
+  if (!body || !threadId) {
+    console.error('コメント本文またはスレッドIDが不足しています')
+    return
+  }
 
   const { error } = await supabase.from('comments').insert({
     thread_id: threadId,

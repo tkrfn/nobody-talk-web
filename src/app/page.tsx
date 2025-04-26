@@ -1,9 +1,9 @@
 // src/app/page.tsx
 import { supabase } from '@/supabase/supabase'
-import { createThread } from '@/lib/actions'
 import { ThreadCard } from '@/components/ThreadCard'
-import { Button } from '@/components/Button'
-import Link from 'next/link'
+import { FAB } from '@/components/FAB'
+
+export const dynamic = 'force-dynamic'
 
 export default async function Home() {
   const { data: threads } = await supabase
@@ -13,39 +13,17 @@ export default async function Home() {
 
   return (
     <main className="max-w-md mx-auto px-4 pt-6 pb-10 space-y-6">
-      <h1 className="text-xl font-bold text-primary">nobody-talk</h1>
-
-      {/* 投稿フォーム */}
-      <form
-        action={createThread}
-        className="bg-card border border-white/10 rounded-xl p-4 space-y-4"
-      >
-        <input
-          name="title"
-          placeholder="タイトルを入力"
-          required
-          className="w-full bg-surface border border-white/20 rounded-lg px-4 py-3 text-text placeholder-subtext text-base focus:outline-none focus:ring-1 focus:ring-primary"
-        />
-        <textarea
-          name="body"
-          placeholder="本文を入力"
-          required
-          rows={4}
-          className="w-full bg-surface border border-white/20 rounded-lg px-4 py-3 text-text placeholder-subtext text-base focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-        />
-        <Button type="submit">投稿する</Button>
-      </form>
-
-      {/* スレッド一覧 */}
+      <h1 className="text-xl font-bold text-text">新着スレッド</h1>
       <ul className="space-y-4">
         {threads?.map((thread) => (
           <li key={thread.id}>
-            <Link href={`/thread/${thread.id}`}>
-              <ThreadCard thread={thread} />
-            </Link>
+            <ThreadCard thread={thread} />
           </li>
         ))}
       </ul>
+
+      {/* 右下の＋ボタン（FAB） */}
+      <FAB />
     </main>
   )
 }

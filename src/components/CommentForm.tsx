@@ -1,7 +1,7 @@
-// src/components/CommentForm.tsx
 'use client'
 
 import { useFormStatus } from 'react-dom'
+import { useRef } from 'react'
 import { Button } from './Button'
 
 type Props = {
@@ -10,9 +10,22 @@ type Props = {
 
 export function CommentForm({ action }: Props) {
   const { pending } = useFormStatus()
+  const formRef = useRef<HTMLFormElement>(null)
+
+  const handleSubmit = () => {
+    setTimeout(() => {
+      const target = document.getElementById('comment-list-end')
+      target?.scrollIntoView({ behavior: 'smooth' })
+    }, 100)
+  }
 
   return (
-    <form action={action} className="space-y-3">
+    <form
+      ref={formRef}
+      action={action} // ← これでOK！
+      onSubmit={handleSubmit} // ← submit後の補助処理だけ別に
+      className="space-y-3"
+    >
       <textarea
         name="body"
         placeholder="コメントを入力"
