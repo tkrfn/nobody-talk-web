@@ -1,66 +1,76 @@
-// src/app/thread/[id]/page.tsx
-import Link from 'next/link'
-import FAB from '@/components/FAB'
-import { supabase } from '@/lib/supabaseClient'
+// src/app/thread/[id]/page.tsx (修正版 - activeSortKey を渡す)
+export const dynamic = 'force-dynamic'
+
+import { redirect } from 'next/navigation'
+import ThreadCard from '@/components/ThreadCard'
 import CommentCard from '@/components/CommentCard'
+// import CommentForm from '@/components/CommentForm' // CommentForm は削除済みのはず
+import SortTabs from '@/components/SortTabs'
+import FAB from '@/components/FAB'
+import { getThreadById } from '@/lib/thread-service'
+import { supabase } from '@/lib/supabaseClient'
 
-interface Thread {
-  id: string
-  title: string
-  body: string
-  created_at: string
+interface PageProps {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ sort?: string }>
 }
 
-interface Comment {
-  id: string
-  body: string
-  created_at: string
-  user_id: string
-}
+export default async function ThreadPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const { id } = await params
+  if (!id) redirect('/')
 
-export default async function ThreadPage(props: { params: { id: string } }) {
-  const { id } = await props.params
+  const thread = await getThreadById(id)
 
-  // スレッド取得
-  const { data: thread } = await supabase
-    .from<Thread>('threads')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // URLからソートキーを取得 (なければ 'new')
+  const { sort } = await searchParams
+  const sortKey = sort ?? 'new' // ★ この sortKey を SortTabs に渡す
+  const ascending = sortKey === 'old'
 
-  // コメント一覧取得
-  const { data: comments } = await supabase
-    .from<Comment>('comments')
+  // コメントデータを取得
+  const { data: comments = [] } = await supabase
+    .from('comments')
     .select('*')
     .eq('thread_id', id)
-    .order('created_at', { ascending: true })
+    .order('created_at', { ascending })
+    .limit(100)
+
+  // likeThreshold を計算
+  const sortedLikes = [...comments].sort((a, b) => b.like_count - a.like_count)
+  const thresholdIdx = Math.ceil(sortedLikes.length * 0.25) - 1
+  const likeThreshold =
+    thresholdIdx >= 0 && sortedLikes[thresholdIdx] ? sortedLikes[thresholdIdx].like_count : 0
+
+  // コメント用ソートオプション
+  const commentSortOptions = [
+    { key: 'new', label: '新着順' },
+    { key: 'old', label: '古い順' },
+  ]
 
   return (
-    <>
-      <main className="max-w-md mx-auto p-4">
-        {/* 戻るリンク */}
-        <Link href="/" className="text-sm text-blue-400 mb-4 inline-block">
-          &larr; 一覧に戻る
-        </Link>
+    <div className="space-y-6 pb-24">
+      {/* ▼▼▼ ここで activeSortKey={sortKey} を渡す ▼▼▼ */}
+      <SortTabs options={commentSortOptions} activeSortKey={sortKey} />
+      {/* ▲▲▲ ここで activeSortKey={sortKey} を渡す ▲▲▲ */}
 
-        {/* スレッド本文 */}
-        <div className="p-4 bg-gray-800 rounded-lg mb-6">
-          <h1 className="text-lg font-bold text-white">{thread?.title}</h1>
-          <p className="mt-2 text-gray-300 whitespace-pre-wrap">{thread?.body}</p>
-        </div>
+      {/* スレッドカード */}
+      {thread && <ThreadCard thread={thread} isDetailPage={true} />} {/* ★ isDetailPage={true} を追加 */}
 
-        {/* コメント一覧 */}
-        <div className="space-y-2">
-          {comments?.map((c) => (
-            <CommentCard key={c.id} comment={c} />
-          ))}
-        </div>
+      {/* コメント一覧 */}
+      <div className="space-y-4">
+        {comments.map((c: any) => (
+          <CommentCard
+            key={c.id}
+            comment={c}
+            highlight={c.like_count >= likeThreshold && likeThreshold > 0}
+          />
+        ))}
+      </div>
 
-        {/* コメント投稿は右下のFABボタンから行います */}
-      </main>
-
-      {/* 右下の + ボタン(コメント投稿フォームを開く) */}
+      {/* FAB */}
       <FAB />
-    </>
+    </div>
   )
 }

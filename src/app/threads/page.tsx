@@ -1,59 +1,59 @@
-// src/app/threads/page.tsx
-'use client'
+// src/app/thread/[id]/page.tsx
+export const dynamic = 'force-dynamic'
 
-import React, { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import ThreadCard from '@/components/ThreadCard'
+import CommentCard from '@/components/CommentCard'
+import SortTabs from '@/components/SortTabs'
 import FAB from '@/components/FAB'
-import { getThreadsSorted } from '@/lib/thread-service'
+import { getThreadById } from '@/lib/thread-service'
+import { supabase } from '@/lib/supabaseClient'
 
-export default function ThreadsPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const sort = searchParams.get('sort') ?? 'new'
-  const [threads, setThreads] = useState<any[]>([])
+interface PageProps {
+  params: { id: string }
+  searchParams: { sort?: string }
+}
 
-  // sort が変わるたびにスレッドを再取得
-  useEffect(() => {
-    ;(async () => {
-      const data = await getThreadsSorted(sort)
-      setThreads(data)
-    })()
-  }, [sort])
+export default async function ThreadPage({
+  params,
+  searchParams,
+}: PageProps) {
+  const { id } = params
+  const thread = await getThreadById(id)
 
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(`/threads?sort=${e.target.value}`)
-  }
+  const sortKey = searchParams.sort ?? 'new'
+  const ascending = sortKey === 'old'
+
+  const { data: comments = [] } = await supabase
+    .from('comments')
+    .select('*')
+    .eq('thread_id', id)
+    .order('created_at', { ascending })
+    .limit(100)
+
+  const sortedLikes = [...comments].sort((a, b) => b.like_count - a.like_count)
+  const thresholdIdx = Math.ceil(sortedLikes.length * 0.25) - 1
+  const likeThreshold =
+    thresholdIdx >= 0 ? sortedLikes[thresholdIdx].like_count : Infinity
+
+  const commentSortOptions = [
+    { key: 'new', label: '新着順' },
+    { key: 'old', label: '古い順' },
+  ]
 
   return (
-    <main className="flex-1">
-      <div className="max-w-md mx-auto p-4 space-y-4">
-        {/* ソートトグル */}
-        <div className="flex justify-end items-center space-x-2">
-          <span className="text-sm text-gray-600">現在の並び:</span>
-          <select
-            value={sort}
-            onChange={handleChange}
-            className="bg-gray-800 text-white border border-gray-600 p-1 rounded text-sm"
-          >
-            <option value="new">新着</option>
-            <option value="24h">24h人気</option>
-            <option value="week">週間人気</option>
-            <option value="month">月間人気</option>
-            <option value="all">全期間人気</option>
-          </select>
-        </div>
-
-        {/* スレッド一覧 */}
-        <div className="space-y-3">
-          {threads.map((thread) => (
-            <ThreadCard key={thread.id} thread={thread} />
-          ))}
-        </div>
+    <div className="space-y-6">
+      <SortTabs options={commentSortOptions} />
+      {thread && <ThreadCard thread={thread} />}
+      <div className="space-y-4">
+        {comments.map((c: any) => (
+          <CommentCard
+            key={c.id}
+            comment={c}
+            highlight={c.like_count >= likeThreshold}
+          />
+        ))}
       </div>
-
-      {/* FAB */}
       <FAB />
-    </main>
+    </div>
   )
 }

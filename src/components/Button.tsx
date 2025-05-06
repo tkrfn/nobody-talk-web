@@ -1,14 +1,13 @@
 // src/components/Button.tsx
 import { ComponentPropsWithoutRef } from 'react'
 
-export function Button({
-  className = '',
-  ...props
-}: ComponentPropsWithoutRef<'button'>) {
+export default function Button({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
   return (
     <button
-      className={`bg-primary hover:bg-primary/90 text-white font-bold text-base rounded-xl px-4 py-3 w-full transition ${className}`}
-      {...props}
-    />
+      onClick={onClick}
+      className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
+    >
+      {children}
+    </button>
   )
 }

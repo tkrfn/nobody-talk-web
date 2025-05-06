@@ -1,13 +1,24 @@
+// src/components/Header.tsx (修正版)
 'use client'
+
 import Link from 'next/link'
 
 export default function Header() {
   return (
-    <header className="bg-gray-900 text-white p-4 flex justify-between items-center">
-      <h1 className="text-xl font-bold">
-        <Link href="/" className="hover:underline">Nobody Talk</Link>
-      </h1>
-      {/* トグルは一覧ページ側に移動しました */}
+    // ▼▼▼ header の className を変更 (背景色、パディング調整) ▼▼▼
+    <header className="w-full bg-header-pink shadow text-white p-4">
+    {/* ▲▲▲ header の className を変更 ▲▲▲ */}
+      <div className="max-w-md mx-auto flex items-center justify-between">
+        {/* クリックでトップへ (文字色変更) */}
+        <Link href="/" className="text-2xl font-bold text-white"> {/* ← text-white 追加 */}
+          Nobody Talk
+        </Link>
+        {/* 利用規約へのリンク (文字色変更) */}
+
+      </div>
+      {/* ▼▼▼ タグライン修正・リンク追加・スタイル調整 ▼▼▼ */}
+
+      {/* ▲▲▲ タグライン修正・リンク追加・スタイル調整 ▲▲▲ */}
     </header>
   )
 }
