@@ -1,71 +1,77 @@
-// src/app/thread/[id]/page.tsx (修正版 - activeSortKey を渡す)
+// src/app/thread/[id]/page.tsx (修正版 - 型定義適用)
 export const dynamic = 'force-dynamic'
 
 import { redirect } from 'next/navigation'
+import { supabase } from '@/lib/supabaseClient'
+import { getThreadById } from '@/lib/thread-service' // getThreadById が Promise<Thread | null> を返すと仮定
+import { Thread, Comment } from '@/types' // ★ 型定義をインポート
 import ThreadCard from '@/components/ThreadCard'
 import CommentCard from '@/components/CommentCard'
-// import CommentForm from '@/components/CommentForm' // CommentForm は削除済みのはず
 import SortTabs from '@/components/SortTabs'
 import FAB from '@/components/FAB'
-import { getThreadById } from '@/lib/thread-service'
-import { supabase } from '@/lib/supabaseClient'
-import React from 'react'; // ← これを追加
+// import React from 'react'; // 通常ページコンポーネントでは不要
 
+// PageProps の型定義 (Promise を削除)
 interface PageProps {
-  params: Promise<{ id: string }>
-  searchParams: Promise<{ sort?: string }>
+  params: { id: string };
+  searchParams: { sort?: string };
 }
 
-export default async function ThreadPage({
-  params,
-  searchParams,
-}: PageProps) {
-  const { id } = await params
-  if (!id) redirect('/')
+export default async function ThreadPage({ params, searchParams }: PageProps) {
+  // params, searchParams は直接アクセス可能 (await不要)
+  const { id } = params;
+  if (!id) redirect('/');
 
-  const thread = await getThreadById(id)
+  // thread の型注釈を追加 (getThreadById の戻り値に依存)
+  const thread: Thread | null = await getThreadById(id);
 
-  // URLからソートキーを取得 (なければ 'new')
-  const { sort } = await searchParams
-  const sortKey = sort ?? 'new' // ★ この sortKey を SortTabs に渡す
-  const ascending = sortKey === 'old'
+  const sortKey = searchParams.sort ?? 'new';
+  const ascending = sortKey === 'old';
 
-  // コメントデータを取得
-  const { data: comments = [] } = await supabase
+  // comments の型注釈を追加
+  let comments: Comment[] = [];
+  const { data, error: commentError } = await supabase
     .from('comments')
-    .select('*')
+    .select<Comment[]>('*') // ★ ここで Comment[] 型を指定
     .eq('thread_id', id)
     .order('created_at', { ascending })
-    .limit(100)
+    .limit(100);
 
-  // likeThreshold を計算
-  const sortedLikes = [...comments].sort((a, b) => b.like_count - a.like_count)
-  const thresholdIdx = Math.ceil(sortedLikes.length * 0.25) - 1
+  if (commentError) {
+    console.error("コメントの取得エラー:", commentError);
+    // ここでエラーページを表示するなどの処理も可能
+  } else {
+    comments = data || []; // data が null の場合は空配列に
+  }
+
+  // likeThreshold の計算 (Null合体演算子 ?? を使って安全に)
+  const sortedLikes = [...comments].sort((a, b) => (b.like_count ?? 0) - (a.like_count ?? 0));
+  const thresholdIdx = Math.ceil(sortedLikes.length * 0.25) - 1;
   const likeThreshold =
-    thresholdIdx >= 0 && sortedLikes[thresholdIdx] ? sortedLikes[thresholdIdx].like_count : 0
+    thresholdIdx >= 0 && sortedLikes[thresholdIdx] ? (sortedLikes[thresholdIdx].like_count ?? 0) : 0;
 
-  // コメント用ソートオプション
   const commentSortOptions = [
     { key: 'new', label: '新着順' },
     { key: 'old', label: '古い順' },
-  ]
+  ];
 
   return (
     <div className="space-y-6 pb-24">
-      {/* ▼▼▼ ここで activeSortKey={sortKey} を渡す ▼▼▼ */}
+      {/* activeSortKey を渡す */}
       <SortTabs options={commentSortOptions} activeSortKey={sortKey} />
-      {/* ▲▲▲ ここで activeSortKey={sortKey} を渡す ▲▲▲ */}
 
-      {/* スレッドカード */}
-      {thread && <ThreadCard thread={thread} isDetailPage={true} />} {/* ★ isDetailPage={true} を追加 */}
+      {/* スレッドカード (thread が null でないか確認) */}
+      {thread && <ThreadCard thread={thread} isDetailPage={true} />}
 
       {/* コメント一覧 */}
       <div className="space-y-4">
-        {comments.map((c: any) => (
+        {/* ★ c の :any 型指定を削除 (TypeScriptが Comment 型と推論) */}
+        {comments.map((c) => (
           <CommentCard
             key={c.id}
-            comment={c}
-            highlight={c.like_count >= likeThreshold && likeThreshold > 0}
+            comment={c} // c は Comment 型
+            // ★ highlight 計算でも ?? を使用
+            highlight={ (c.like_count ?? 0) >= likeThreshold && likeThreshold > 0}
           />
         ))}
       </div>
@@ -73,5 +79,5 @@ export default async function ThreadPage({
       {/* FAB */}
       <FAB />
     </div>
-  )
+  );
 }

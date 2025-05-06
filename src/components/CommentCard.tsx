@@ -1,14 +1,14 @@
 // src/components/CommentCard.tsx (修正版 - ClickableBody を使用)
-'use client'; // 子コンポーネントでクライアント機能を使う可能性があるため
+'use client'; // ClickableBody を使うので念のため
 
-import React from 'react';
+import React from 'react'; // ★ React をインポート
 import LikeButton from '@/components/LikeButton';
 import ClickableBody from './ClickableBody'; // ★ ClickableBody をインポート
 
-// Comment 型定義 (body が null/undefined の可能性も考慮)
+// Comment 型定義 (ClickableBodyに合わせて body を調整)
 export interface Comment {
   id: string;
-  body: string | null | undefined;
+  body: string | null | undefined; // ★ null/undefined 許容に変更
   created_at: string;
   like_count?: number;
   author_name?: string; // 匿名なら使わないかも
@@ -22,21 +22,22 @@ interface Props {
 }
 
 export default function CommentCard({ comment, className = '', highlight }: Props) {
-  // 日付フォーマット (変更なし)
+  // 日付フォーマット
   const formattedDate = comment.created_at
     ? new Date(comment.created_at).toLocaleString('ja-JP', { dateStyle: 'short', timeStyle: 'short' })
     : '';
 
   return (
     <div
-      className={`bg-white rounded-2xl shadow p-4 transition hover:shadow-md border border-card-border ${ // カードスタイル (変更なし)
+      // カードスタイル (変更なし)
+      className={`bg-white rounded-2xl shadow p-4 transition hover:shadow-md border border-card-border ${
         highlight ? 'ring-2 ring-offset-2 ring-pink-400' : ''
       } ${className}`}
     >
-      {/* ▼▼▼ コメント本文を ClickableBody で表示するように変更 ▼▼▼ */}
+      {/* ▼▼▼ コメント本文を ClickableBody で表示 ▼▼▼ */}
       {/* 元の <p> タグでの表示をコメントアウトまたは削除 */}
       {/* <p className="text-sm text-gray-800 whitespace-pre-wrap break-words mb-3">{comment.body}</p> */}
-      <ClickableBody body={comment.body} /> {/* ★ ClickableBody を使用 (文字数制限は不要なので指定しない) */}
+      <ClickableBody body={comment.body} /> {/* ★ ClickableBody を使用 */}
       {/* ▲▲▲ コメント本文表示変更 ▲▲▲ */}
 
       {/* フッター部分 (変更なし) */}

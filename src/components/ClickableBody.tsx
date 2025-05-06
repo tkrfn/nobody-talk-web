@@ -1,7 +1,8 @@
 // src/components/ClickableBody.tsx (新規作成)
-'use client'; // Client Component (内部で特別な処理は少ないが念のため)
+'use client'; // Client Component
 
 import React from 'react';
+// import EmbedLoader from './EmbedLoader'; // oEmbed方式の場合はこちらを有効化
 
 // --- Helper Functions ---
 function getYouTubeVideoId(url: string): string | null {
@@ -21,7 +22,7 @@ function getTikTokVideoId(url: string): string | null {
   return match && match[1] ? match[1] : null;
 }
 const linkOrNewlineRegex = /((?:https?:\/\/)[^\s<>"'()]*[^\s<>"'().,?!])|(\n)/gi;
-const embedDomains = ['youtube.com', 'youtu.be', 'twitter.com', 'x.com', 'tiktok.com'];
+// const embedDomains = ['youtube.com', 'youtu.be', 'twitter.com', 'x.com', 'tiktok.com']; // oEmbed用
 
 // --- Component Props ---
 interface Props {
@@ -29,19 +30,18 @@ interface Props {
   charLimit?: number; // 文字数制限 (スレッド本体でのみ使用想定)
 }
 
-// --- Component ---
+// --- ClickableBody Component (公式ウィジェットスクリプト方式) ---
 export default function ClickableBody({ body, charLimit }: Props) {
   if (!body) {
     return <div className="text-sm text-gray-800 whitespace-pre-wrap break-words mb-2"></div>;
   }
 
-  // 文字数制限 (charLimit が指定された場合のみ適用)
   const limitedBody = (charLimit && body.length > charLimit) ? body.slice(0, charLimit) + '...' : body;
 
   const elements: React.ReactNode[] = [];
   let lastIndex = 0;
   let match;
-  linkOrNewlineRegex.lastIndex = 0; // 正規表現のインデックスをリセット
+  linkOrNewlineRegex.lastIndex = 0;
 
   while ((match = linkOrNewlineRegex.exec(limitedBody)) !== null) {
     const url = match[1];
@@ -79,6 +79,5 @@ export default function ClickableBody({ body, charLimit }: Props) {
     elements.push(<React.Fragment key={`text-${lastIndex}`}>{limitedBody.substring(lastIndex)}</React.Fragment>);
   }
 
-  // space-y-2 は blockquote や iframe の間隔調整用
   return ( <div className="text-sm text-gray-800 whitespace-pre-wrap break-words space-y-2">{elements}</div> );
 }

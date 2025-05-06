@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useEffect, useRef } from 'react'; // ★ useRef をインポート
+import ClickableBody from './ClickableBody';
 
 // Props の型定義
 interface ThreadCardProps {
