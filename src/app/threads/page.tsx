@@ -7,6 +7,7 @@ import SortTabs from '@/components/SortTabs'
 import FAB from '@/components/FAB'
 import { getThreadById } from '@/lib/thread-service'
 import { supabase } from '@/lib/supabaseClient'
+import React from 'react'; // ← これを追加
 
 interface PageProps {
   params: { id: string }

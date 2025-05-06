@@ -7,6 +7,7 @@ import SortTabs from '@/components/SortTabs'
 import ThreadCard from '@/components/ThreadCard'
 import FAB from '@/components/FAB'
 import { getThreadsSorted } from '@/lib/thread-service'
+import React from 'react'; // ← これを追加
 
 interface PageProps {
   searchParams: Promise<{ sort?: string; page?: string }>
