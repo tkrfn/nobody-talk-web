@@ -32,7 +32,7 @@ export default async function ThreadPage({ params, searchParams }: PageProps) {
   let comments: Comment[] = [];
   const { data, error: commentError } = await supabase
     .from('comments')
-    .select<Comment[]>('*') // ★ ここで Comment[] 型を指定
+    .select<Comment>('*') // ★ ジェネリック型を Comment に変更 (配列ではなく単一の型)
     .eq('thread_id', id)
     .order('created_at', { ascending })
     .limit(100);
