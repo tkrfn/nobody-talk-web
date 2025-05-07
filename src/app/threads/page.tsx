@@ -29,9 +29,9 @@ export default async function Home({ searchParams }: PageProps) {
   try { // エラーハンドリング追加推奨
     if (sortKey === 'random') {
       // ★ select<Thread[]> で型を指定
-      const { data, error } = await supabase.from('threads').select<Thread[]>('*');
+      const { data, error } = await supabase.from('threads').select('*');;
       if (error) throw error; // エラーがあればスロー
-      allThreads = (data || []).sort(() => Math.random() - 0.5);
+      allThreads = ((data as Thread[] | null) || []).sort(() => Math.random() - 0.5);
     } else {
       // getThreadsSorted が Thread[] を返すと仮定
       allThreads = await getThreadsSorted(sortKey);

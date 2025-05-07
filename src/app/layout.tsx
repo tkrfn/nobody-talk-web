@@ -1,14 +1,14 @@
-// src/app/layout.tsx (修正版 - ウィジェットスクリプト追加)
+// src/app/layout.tsx (Suspense対応 - Analytics用)
 import './globals.css'
 import { Metadata } from 'next'
-import Script from 'next/script' // ★ Script コンポーネントをインポート
+import Script from 'next/script'
 import SupabaseProvider from '@/lib/SupabaseProvider'
 import Header from '@/components/Header'
 import Footer from '@/components/Footer'
 import Tagline from '@/components/Tagline'
-import Analytics from '@/components/Analytics' // Analytics コンポーネントもインポート
+import Analytics from '@/components/Analytics'
+import React from 'react'; // ★ React をインポート (Suspense を使うため)
 
-// metadata (変更なし、ファビコン設定含む)
 export const metadata: Metadata = {
   title: 'Nobody Talk',
   description: '匿名掲示板「Nobody Talk」',
@@ -24,32 +24,37 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="min-h-screen font-sans bg-background-cream text-gray-800">
+      <body className="min-h-screen font-sans bg-slate-900 text-slate-200"> {/* ダークモード風の配色例 */}
         <SupabaseProvider>
+          {/* HeaderはuseSearchParams等を使っていないのでSuspenseは不要 (現時点のコードでは) */}
           <Header />
+
           <div className="max-w-md mx-auto px-4 py-6">
+            {/* TaglineもuseSearchParams等を使っていないのでSuspenseは不要 (現時点のコードでは) */}
             <Tagline />
             <main className="space-y-6">
               {children}
             </main>
           </div>
-          <Footer />
-          <Analytics /> {/* GA用コンポーネント */}
 
-          {/* ▼▼▼ X(Twitter) と TikTok の埋め込み用スクリプトを追加 ▼▼▼ */}
-          {/* Twitter Widget Script */}
+          {/* FooterもuseSearchParams等を使っていないのでSuspenseは不要 (現時点のコードでは) */}
+          <Footer />
+
+          {/* ▼▼▼ Analytics を Suspense でラップ ▼▼▼ */}
+          <React.Suspense fallback={null}> {/* fallbackはnullでも良いが、何か表示したい場合は適宜設定 */}
+            <Analytics />
+          </React.Suspense>
+          {/* ▲▲▲ AnalyticsのSuspenseラップここまで ▲▲▲ */}
+
           <Script
             src="https://platform.twitter.com/widgets.js"
-            strategy="lazyOnload" // 他のコンテンツ読み込み後に実行
+            strategy="lazyOnload"
             charSet="utf-8"
           />
-          {/* TikTok Embed Script */}
           <Script
             src="https://www.tiktok.com/embed.js"
-            strategy="lazyOnload" // 他のコンテンツ読み込み後に実行
+            strategy="lazyOnload"
           />
-          {/* ▲▲▲ スクリプト追加ここまで ▲▲▲ */}
-
         </SupabaseProvider>
       </body>
     </html>

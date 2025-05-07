@@ -1,10 +1,10 @@
-// src/components/ThreadCard.tsx (ClickableBody 重複定義 修正済み)
+// src/components/ThreadCard.tsx (型エラー修正版)
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useEffect, useRef } from 'react';
-import ClickableBody from './ClickableBody'; // ★ このインポートは残します
+import ClickableBody from './ClickableBody';
 
 export interface ThreadCardProps {
   thread: {
@@ -40,80 +40,11 @@ function getTikTokVideoId(url: string): string | null {
 }
 const linkOrNewlineRegex = /((?:https?:\/\/)[^\s<>"'()]*[^\s<>"'().,?!])|(\n)/gi;
 
-// ▼▼▼ この ClickableBody 関数の定義を削除またはコメントアウトします ▼▼▼
-/*
-function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undefined, charLimit?: number }) {
-  if (!body) { return <div className="text-sm mb-2"></div>; }
-  const limitedBody = body.length > charLimit ? body.slice(0, charLimit) + '...' : body;
-  const elements: React.ReactNode[] = [];
-  let lastIndex = 0;
-  let match;
-
-  linkOrNewlineRegex.lastIndex = 0;
-  while ((match = linkOrNewlineRegex.exec(limitedBody)) !== null) {
-    const url = match[1];
-    const newline = match[2];
-    const startIndex = match.index;
-
-    if (startIndex > lastIndex) {
-      elements.push(<React.Fragment key={`text-${lastIndex}`}>{limitedBody.substring(lastIndex, startIndex)}</React.Fragment>);
-    }
-
-    if (newline) {
-      elements.push(<React.Fragment key={`br-${startIndex}`}></React.Fragment>);
-    } else if (url) {
-      const youtubeVideoId = getYouTubeVideoId(url);
-      const tiktokVideoId = getTikTokVideoId(url);
-      const isX = url.includes('twitter.com') || url.includes('x.com');
-
-      if (youtubeVideoId) {
-        elements.push(
-          <div key={`${startIndex}-youtube`} className="my-3 aspect-video max-w-full mx-auto" style={{ maxWidth: '560px' }}>
-            <iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/${youtubeVideoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
-          </div>
-        );
-      } else if (isX) {
-        elements.push(
-          <blockquote key={`${startIndex}-tweet`} className="twitter-tweet" data-theme="dark" data-dnt="true">
-             <a href={url} className="text-sky-400 hover:text-sky-300">ツイートを読み込み中... {url}</a>
-          </blockquote>
-        );
-      } else if (tiktokVideoId) {
-         elements.push(
-           <blockquote key={`${startIndex}-tiktok`} className="tiktok-embed" cite={url} data-video-id={tiktokVideoId} style={{ maxWidth: '605px', minWidth: '325px' }}>
-             <section><a target="_blank" rel="noopener noreferrer" title="TikTok video" href={url} className="text-sky-400 hover:text-sky-300">TikTok 動画を読み込み中... {url}</a></section>
-           </blockquote>
-         );
-      } else {
-        let href = url;
-        if (href.toLowerCase().startsWith('www.')) { href = 'http://' + href; }
-        if (!href.toLowerCase().startsWith('http')) {
-           elements.push(<React.Fragment key={`text-${startIndex}`}>{url}</React.Fragment>);
-        } else {
-           elements.push( <a key={`link-${startIndex}`} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 break-all">{url}</a> );
-        }
-      }
-    }
-    lastIndex = linkOrNewlineRegex.lastIndex;
-  }
-
-  if (lastIndex < limitedBody.length) {
-    elements.push(<React.Fragment key={`text-${lastIndex}`}>{limitedBody.substring(lastIndex)}</React.Fragment>);
-  }
-
-  return (
-    <div className="text-sm whitespace-pre-wrap break-words mb-2 space-y-2">
-      {elements}
-    </div>
-  );
-}
-*/
-// ▲▲▲ ここまで削除またはコメントアウト ▲▲▲
-
+// ClickableBody は別ファイルからインポートされている前提
 
 export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardProps) {
-  const Container = isDetailPage ? 'div' : Link;
-  const containerProps = isDetailPage ? {} : { href: `/thread/${thread.id}` };
+  // const Container = isDetailPage ? 'div' : Link; // ★ この行は不要になります
+  // const containerProps = isDetailPage ? {} : { href: `/thread/${thread.id}` }; // ★ この行は不要になります
   const bodyContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -136,18 +67,17 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
     }
   }, [isDetailPage, thread.body, thread.id]);
 
-  return (
-    <Container
-      {...containerProps}
-      className={`
-        bg-slate-800 text-slate-100  rounded-2xl shadow
-        border border-slate-600  transition
-        ${isDetailPage
-          ? 'block p-4'
-          : 'hover:bg-slate-600 flex items-center gap-3 p-3 rounded-xl'
-        }
-      `}
-    >
+  const cardClassNames = `
+    bg-slate-700 text-slate-100  rounded-2xl shadow
+    border border-slate-600  transition
+    ${isDetailPage
+      ? 'block p-4'
+      : 'hover:bg-slate-600 flex items-center gap-3 p-3 rounded-xl'
+    }
+  `;
+
+  const cardContent = (
+    <>
       {thread.image_url && (
         <div className={`relative flex-shrink-0 ${
             isDetailPage
@@ -172,7 +102,7 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
           <h2 className={`text-lg font-semibold mb-1 ${!isDetailPage ? 'truncate' : ''}`}>{thread.title}</h2>
           {isDetailPage ? (
             <div ref={bodyContainerRef}>
-              <ClickableBody body={thread.body} charLimit={1000} /> {/* ← インポートしたものが使われる */}
+              <ClickableBody body={thread.body} charLimit={1000} />
             </div>
           ) : (
             null
@@ -203,6 +133,21 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
              </div>
         )}
       </div>
-    </Container>
+    </>
   );
+
+  // ★ isDetailPage に基づいてレンダリングするコンポーネントを切り替える
+  if (isDetailPage) {
+    return (
+      <div className={cardClassNames}>
+        {cardContent}
+      </div>
+    );
+  } else {
+    return (
+      <Link href={`/thread/${thread.id}`} className={cardClassNames}>
+        {cardContent}
+      </Link>
+    );
+  }
 }
