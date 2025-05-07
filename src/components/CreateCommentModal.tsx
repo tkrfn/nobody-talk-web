@@ -1,52 +1,56 @@
-// src/components/CreateCommentModal.tsx (修正版 - 本文文字数制限追加)
+// src/components/CreateCommentModal.tsx (no-explicit-any 修正版)
 'use client'
 
 import { useState, FormEvent } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-// import { useRouter } from 'next/navigation' // window.location.reload() を使う場合は不要
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  threadId: string // コメント対象のスレッドID
+  threadId: string
 }
 
 export default function CreateCommentModal({ isOpen, onClose, threadId }: Props) {
   const [body, setBody] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const MAX_COMMENT_LENGTH = 1000; // ★ 文字数制限を定数で定義
+  const MAX_COMMENT_LENGTH = 1000;
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // ★ 文字数チェックを追加
     if (body.trim().length > MAX_COMMENT_LENGTH) {
       alert(`コメントは${MAX_COMMENT_LENGTH}文字以内で入力してください。`);
-      setError(`コメントは${MAX_COMMENT_LENGTH}文字以内で入力してください。`); // エラー表示用にもセット
+      setError(`コメントは${MAX_COMMENT_LENGTH}文字以内で入力してください。`);
       return;
     }
-    // ★ 必須チェック (変更なし)
     if (!body.trim() || isLoading) return;
 
     setIsLoading(true);
-    setError(null); // エラーをリセット
+    setError(null);
 
     try {
       const { error: insertError } = await supabase
         .from('comments')
-        .insert([ { body: body.trim(), thread_id: threadId } ]); // trim() はここでも有効
+        .insert([ { body: body.trim(), thread_id: threadId } ]);
 
       if (insertError) { throw insertError; }
 
       setBody('');
       onClose();
       window.location.reload();
-      // router.refresh(); // こちらを使う場合
 
-    } catch (err: any) {
+    } catch (err: unknown) { // ★ any から unknown に変更
       console.error('コメント投稿エラー:', err);
-      setError(err.message || 'コメントの投稿中にエラーが発生しました。');
+      // err が Error インスタンスで message プロパティを持つか確認
+      if (err instanceof Error) {
+        setError(err.message);
+      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as any).message === 'string') {
+        setError((err as any).message); // より安全なアクセス
+      }
+      else {
+        setError('コメントの投稿中にエラーが発生しました。');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -59,22 +63,20 @@ export default function CreateCommentModal({ isOpen, onClose, threadId }: Props)
       <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-xl font-semibold mb-4 text-white">コメントを作成</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div> {/* ラベルとカウンターをグループ化 */}
+          <div>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder={`コメントを入力… (${MAX_COMMENT_LENGTH}文字まで)`} // Placeholder 更新
-              rows={5} // 少し高さを増やす
-              maxLength={MAX_COMMENT_LENGTH} // ★ maxLength 属性を追加
+              placeholder={`コメントを入力… (${MAX_COMMENT_LENGTH}文字まで)`}
+              rows={5}
+              maxLength={MAX_COMMENT_LENGTH}
               className="w-full px-3 py-2 rounded bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
               required
               disabled={isLoading}
             />
-            {/* ▼▼▼ 文字数カウンター (任意) ▼▼▼ */}
             <div className={`text-right text-xs ${body.length > MAX_COMMENT_LENGTH ? 'text-red-400' : 'text-gray-400'}`}>
               {body.length} / {MAX_COMMENT_LENGTH}
             </div>
-            {/* ▲▲▲ 文字数カウンター ▲▲▲ */}
           </div>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}

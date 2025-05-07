@@ -1,12 +1,11 @@
-// src/components/ThreadCard.tsx
-'use client'; // クライアントコンポーネント
+// src/components/ThreadCard.tsx (@ts-expect-error 説明追加版)
+'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useEffect, useRef } from 'react';
 import ClickableBody from './ClickableBody';
 
-// Props の型定義
 interface ThreadCardProps {
   thread: {
     id: string;
@@ -21,7 +20,6 @@ interface ThreadCardProps {
   isDetailPage?: boolean;
 }
 
-// --- Helper Functions (変更なし) ---
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
@@ -40,9 +38,8 @@ function getTikTokVideoId(url: string): string | null {
 }
 const linkOrNewlineRegex = /((?:https?:\/\/)[^\s<>"'()]*[^\s<>"'().,?!])|(\n)/gi;
 
-// --- ClickableBody Component (変更なし、ただし文字色は親から継承される想定) ---
 function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undefined, charLimit?: number }) {
-  if (!body) { return <div className="text-sm mb-2"></div>; } // 文字色クラスは削除 (親から継承)
+  if (!body) { return <div className="text-sm mb-2"></div>; }
   const limitedBody = body.length > charLimit ? body.slice(0, charLimit) + '...' : body;
   const elements: React.ReactNode[] = [];
   let lastIndex = 0;
@@ -73,14 +70,14 @@ function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undef
         );
       } else if (isX) {
         elements.push(
-          <blockquote key={`${startIndex}-tweet`} className="twitter-tweet" data-theme="dark" data-dnt="true"> {/* data-theme="dark" に変更 */}
-             <a href={url} className="text-sky-400 hover:text-sky-300">ツイートを読み込み中... {url}</a> {/* リンク色を調整 */}
+          <blockquote key={`${startIndex}-tweet`} className="twitter-tweet" data-theme="dark" data-dnt="true">
+             <a href={url} className="text-sky-400 hover:text-sky-300">ツイートを読み込み中... {url}</a>
           </blockquote>
         );
       } else if (tiktokVideoId) {
          elements.push(
            <blockquote key={`${startIndex}-tiktok`} className="tiktok-embed" cite={url} data-video-id={tiktokVideoId} style={{ maxWidth: '605px', minWidth: '325px' }}>
-             <section><a target="_blank" rel="noopener noreferrer" title="TikTok video" href={url} className="text-sky-400 hover:text-sky-300">TikTok 動画を読み込み中... {url}</a></section> {/* リンク色を調整 */}
+             <section><a target="_blank" rel="noopener noreferrer" title="TikTok video" href={url} className="text-sky-400 hover:text-sky-300">TikTok 動画を読み込み中... {url}</a></section>
            </blockquote>
          );
       } else {
@@ -89,7 +86,6 @@ function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undef
         if (!href.toLowerCase().startsWith('http')) {
            elements.push(<React.Fragment key={`text-${startIndex}`}>{url}</React.Fragment>);
         } else {
-           // リンク色を明るめに調整
            elements.push( <a key={`link-${startIndex}`} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 break-all">{url}</a> );
         }
       }
@@ -101,7 +97,6 @@ function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undef
     elements.push(<React.Fragment key={`text-${lastIndex}`}>{limitedBody.substring(lastIndex)}</React.Fragment>);
   }
 
-  // 親要素から文字色を継承するため、ここでは text-gray-800 を削除
   return (
     <div className="text-sm whitespace-pre-wrap break-words mb-2 space-y-2">
       {elements}
@@ -109,8 +104,6 @@ function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undef
   );
 }
 
-
-// --- ThreadCard Component 本体 ---
 export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardProps) {
   const Container = isDetailPage ? 'div' : Link;
   const containerProps = isDetailPage ? {} : { href: `/thread/${thread.id}` };
@@ -119,13 +112,13 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
   useEffect(() => {
     if (isDetailPage) {
       const loadWidgets = () => {
-        // @ts-expect-error
+        // @ts-expect-error window.twttr is a global variable injected by Twitter's script and not typed in this project.
         if (typeof window !== 'undefined' && window.twttr) {
-           // @ts-expect-error
+           // @ts-expect-error twttr.widgets or its load method might not be available or typed.
            if (window.twttr.widgets?.load) {
               try {
                  const target = bodyContainerRef.current || document.body;
-                 // @ts-expect-error
+                 // @ts-expect-error The load method's signature or existence is not strictly typed here.
                  window.twttr.widgets.load(target);
               } catch (e) { console.error("Error executing twttr.widgets.load:", e); }
            }
@@ -148,11 +141,10 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
         }
       `}
     >
-      {/* --- 画像表示部分 (サムネイル画像の背景を調整) --- */}
       {thread.image_url && (
         <div className={`relative flex-shrink-0 ${
             isDetailPage 
-              ? 'w-[100px] h-[100px] mb-4 bg-slate-600 rounded-lg overflow-hidden flex items-center justify-center' // 背景色変更
+              ? 'w-[100px] h-[100px] mb-4 bg-slate-600 rounded-lg overflow-hidden flex items-center justify-center'
               : 'w-12 h-12 relative'
         }`}>
           {isDetailPage ? (
@@ -169,35 +161,31 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
               src={thread.image_url}
               alt="スレッド画像"
               fill
-              className="object-contain rounded-md bg-slate-800" // サムネイル背景をさらに暗く
+              className="object-contain rounded-md bg-slate-800"
               sizes="48px"
               priority={false}
             />
           )}
         </div>
       )}
-      {/* --- テキスト部分 --- */}
       <div className={`flex flex-col justify-between min-w-0 ${!isDetailPage ? 'flex-grow' : ''}`}>
          <div>
-          {/* タイトル色は親から継承 (text-slate-100) */}
           <h2 className={`text-lg font-semibold mb-1 ${!isDetailPage ? 'truncate' : ''}`}>{thread.title}</h2>
           {isDetailPage ? (
             <div ref={bodyContainerRef}>
-              {/* ClickableBody の文字色は親から継承 (text-slate-100) */}
               <ClickableBody body={thread.body} charLimit={1000} />
             </div>
           ) : (
             null
           )}
         </div>
-        {/* --- フッター情報 (文字色とアイコン色を調整) --- */}
         {isDetailPage ? (
-            <div className="mt-1 text-xs text-slate-400 flex items-center justify-between"> {/* 文字色変更 */}
+            <div className="mt-1 text-xs text-slate-400 flex items-center justify-between">
               <span>👤 {thread.author_name || '匿名さん'}</span>
               <time dateTime={thread.created_at}>{new Date(thread.created_at).toLocaleString('ja-JP', { dateStyle: 'short', timeStyle: 'short' })}</time>
             </div>
         ) : (
-             <div className="mt-0 text-xs text-slate-400 flex items-center justify-between"> {/* 文字色変更 */}
+             <div className="mt-0 text-xs text-slate-400 flex items-center justify-between">
                  <div className="flex items-center">
                      <span>👤 {thread.author_name || '匿名さん'}</span>
                      <span className="mx-1">·</span>
@@ -209,9 +197,7 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
                        alt="コメント"
                        width={16}
                        height={16}
-                       className="mr-0.5" // SVG自体の色に依存、またはCSSフィルターで調整
-                       // style={{ filter: 'brightness(0) invert(1)' }} // 例: 白くする場合のフィルター (SVGが単色の場合)
-                       // もしSVGがfill="currentColor"なら、親のtext-slate-400が効く
+                       className="mr-0.5"
                      />
                      <span>{thread.comment_count}</span>
                  </div>

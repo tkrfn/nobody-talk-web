@@ -1,7 +1,7 @@
-// /src/components/CreateThreadModal.tsx (修正版 - タイトル文字数制限追加)
+// /src/components/CreateThreadModal.tsx (no-explicit-any 修正版)
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react' // FormEvent, ChangeEvent をインポート
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image';
@@ -28,24 +28,23 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => { // ★ React.ChangeEvent を ChangeEvent に変更 (インポートするため)
     setFile(e.target.files?.[0] ?? null);
   }
   const clearFile = () => setFile(null);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // ★ React.FormEvent を FormEvent に変更 (インポートするため)
     e.preventDefault();
 
-    // ★ タイトル文字数チェックを追加
     if (title.trim().length > 50) {
       alert("タイトルは50文字以内で入力してください。");
       return;
     }
-    if (!title.trim()) { // タイトル必須チェック (required属性もあるが念のため)
+    if (!title.trim()) {
       alert("タイトルは必須です。");
       return;
     }
-    if (!body.trim()) { // 本文必須チェック
+    if (!body.trim()) {
       alert("本文は必須です。");
       return;
     }
@@ -55,7 +54,6 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
     let imageUrl: string | null = null;
 
     try {
-      // (ファイルアップロード処理は変更なし)
       if (file) {
         console.log("Uploading file:", file.name, file.type);
         const ext = file.name.split('.').pop();
@@ -64,7 +62,7 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
         if (uploadError) throw new Error(`ファイルのアップロードに失敗しました: ${uploadError.message}`);
         console.log("Upload successful:", uploadData);
         const { data: urlData } = supabase.storage.from('thread-images').getPublicUrl(uploadData.path);
-        imageUrl = urlData?.publicUrl || uploadData.path;
+        imageUrl = urlData?.publicUrl || uploadData.path; // publicUrl が null の場合も考慮
         console.log("Image URL:", imageUrl);
       } else {
         const randomImages = ['/Random1.png', '/Random2.png', '/Random3.png', '/Random4.png'];
@@ -74,7 +72,6 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
 
       const authorNameToInsert = name.trim() || '誰にも言えないスレ主';
 
-      // (データベース書き込み処理は変更なし)
       console.log("Inserting into threads:", { title: title.trim(), author_name: authorNameToInsert, body: body.trim(), image_url: imageUrl });
       const { error: insertError } = await supabase.from('threads').insert({ title: title.trim(), author_name: authorNameToInsert, body: body.trim(), image_url: imageUrl });
       if (insertError) throw new Error(`データベースへの書き込みに失敗しました: ${insertError.message}`);
@@ -87,9 +84,15 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
       onClose();
       router.refresh();
 
-    } catch (error: any) {
+    } catch (error: unknown) { // ★ any から unknown に変更
       console.error("handleSubmit Error:", error);
-      alert(`エラーが発生しました。\n${error.message}`);
+      if (error instanceof Error) {
+        alert(`エラーが発生しました。\n${error.message}`);
+      } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
+        alert(`エラーが発生しました。\n${(error as any).message}`);
+      } else {
+        alert(`予期せぬエラーが発生しました。`);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -103,7 +106,6 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-white z-10"> × </button>
         <h2 className="text-xl font-semibold text-center text-white">新規スレッド作成</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* スレッドタイトル (必須) */}
           <div>
             <label htmlFor="threadTitleModal" className="block mb-1 text-sm font-medium text-gray-200">
               スレッドタイトル<span className="text-red-500 text-xs ml-1">※必須</span>
@@ -113,15 +115,12 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="スレッドのタイトルを入力 (50文字まで)" // Placeholder 更新
+              placeholder="スレッドのタイトルを入力 (50文字まで)"
               required
-              maxLength={50} // ★ maxLength 属性を追加
+              maxLength={50}
               className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white focus:ring-pink-500 focus:border-pink-500"
             />
           </div>
-
-          {/* 投稿者名 (任意) */}
-          {/* ... (変更なし) ... */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-200">投稿者名</label>
             <input
@@ -132,10 +131,6 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
               className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white focus:ring-pink-500 focus:border-pink-500"
             />
           </div>
-
-
-          {/* 画像アップロード (任意) */}
-          {/* ... (変更なし) ... */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-200">画像 (任意)</label>
             <input type="file" accept="image/*" onChange={handleFileChange} className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"/>
@@ -146,10 +141,6 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
               </div>
             )}
           </div>
-
-
-          {/* 本文 (必須) */}
-          {/* ... (変更なし) ... */}
           <div>
             <label className="block mb-1 text-sm font-medium text-gray-200">
               本文<span className="text-red-500 text-xs ml-1">※必須</span>
@@ -163,13 +154,9 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
               className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white resize-none focus:ring-pink-500 focus:border-pink-500"
             />
           </div>
-
-          {/* 投稿ボタン */}
-          {/* ... (変更なし) ... */}
            <button type="submit" disabled={submitting} className="w-full py-2 bg-pink-500 rounded-lg text-white hover:bg-pink-600 transition disabled:opacity-50">
             {submitting ? '投稿中…' : '投稿する'}
           </button>
-
         </form>
       </div>
     </div>
