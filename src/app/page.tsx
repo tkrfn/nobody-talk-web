@@ -1,4 +1,4 @@
-// src/app/page.tsx (PageProps型エラー 再修正版)
+// src/app/page.tsx (人気ソートオプション変更・ビルド対応・型エラー対策済み)
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
@@ -8,8 +8,6 @@ import ThreadCard from '@/components/ThreadCard';
 import type { ThreadCardProps } from '@/components/ThreadCard';
 import FAB from '@/components/FAB';
 
-// ★ interface PageProps の定義を削除
-
 async function fetchThreadsWithComments(
   page = 1,
   sortKey = 'new',
@@ -18,17 +16,33 @@ async function fetchThreadsWithComments(
   const offset = (page - 1) * limit;
   let rpcSortColumn = 'created_at';
   let rpcIsAscending = false;
+  let rpcPopularityPeriod: string | null = null; // 人気ソート用の期間指定
 
   switch (sortKey) {
     case 'new':
       rpcSortColumn = 'created_at';
       rpcIsAscending = false;
       break;
-    case 'comment_count_desc':
-      rpcSortColumn = 'comment_count';
-      rpcIsAscending = false;
+    case 'popular_24h':
+      // バックエンドRPCが 'popularity' でソートし、'24h' の期間を解釈することを期待
+      rpcSortColumn = 'popularity'; // 仮のソートカラム名 (実際のRPCに合わせてください)
+      rpcIsAscending = false;       // 人気順は通常降順
+      rpcPopularityPeriod = '24h';
+      // console.warn("Sortkey 'popular_24h' selected. Ensure backend RPC handles this."); // デバッグ用
       break;
-    default:
+    case 'popular_week':
+      rpcSortColumn = 'popularity';
+      rpcIsAscending = false;
+      rpcPopularityPeriod = 'week';
+      // console.warn("Sortkey 'popular_week' selected. Ensure backend RPC handles this.");
+      break;
+    case 'popular_month':
+      rpcSortColumn = 'popularity';
+      rpcIsAscending = false;
+      rpcPopularityPeriod = 'month';
+      // console.warn("Sortkey 'popular_month' selected. Ensure backend RPC handles this.");
+      break;
+    default: // 'new' および未定義のsortKeyは新着順とする
       rpcSortColumn = 'created_at';
       rpcIsAscending = false;
       break;
@@ -36,10 +50,11 @@ async function fetchThreadsWithComments(
 
   if (sortKey === 'random') {
     const { data, error } = await supabase.rpc('get_threads_with_comment_count', {
-      order_by_column: 'created_at',
+      order_by_column: 'created_at', // ベースのソート
       is_ascending: false,
-      page_limit: 100,
+      page_limit: 100, // ある程度多めに取得
       page_offset: 0,
+      popularity_period: null // ランダムの場合は期間指定なし
     });
     if (error) {
       console.error('Error fetching threads for random sort:', error.message);
@@ -53,16 +68,16 @@ async function fetchThreadsWithComments(
     is_ascending: rpcIsAscending,
     page_limit: limit,
     page_offset: offset,
+    popularity_period: rpcPopularityPeriod // RPCに期間を渡す
   });
 
   if (error) {
-    console.error('Error fetching threads with comment count:', error.message);
+    console.error(`Error fetching threads (sort: ${sortKey}, period: ${rpcPopularityPeriod}):`, error ? error.message : 'Unknown error');
     return [];
   }
   return data || [];
 }
 
-// ★ Home コンポーネントの引数の型を直接指定
 export default async function Home({
   searchParams,
 }: {
@@ -88,7 +103,9 @@ export default async function Home({
 
   const options = [
     { key: 'new', label: '新着' },
-    { key: 'comment_count_desc', label: 'コメント多'},
+    { key: 'popular_24h', label: '24H人気' },
+    { key: 'popular_week', label: '週間人気' },
+    { key: 'popular_month', label: '月間人気' },
     { key: 'random', label: 'ランダム' },
   ];
 

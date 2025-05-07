@@ -1,10 +1,10 @@
-// src/components/ThreadCard.tsx (@ts-expect-error 説明追加版)
+// src/components/ThreadCard.tsx (ClickableBody 重複定義 修正済み)
 'use client';
 
 import Link from 'next/link';
 import Image from 'next/image';
 import React, { useEffect, useRef } from 'react';
-import ClickableBody from './ClickableBody';
+import ClickableBody from './ClickableBody'; // ★ このインポートは残します
 
 interface ThreadCardProps {
   thread: {
@@ -16,10 +16,12 @@ interface ThreadCardProps {
     image_url?: string | null;
     user_id?: string;
     comment_count: number;
+    popularity_score?: number;
   };
   isDetailPage?: boolean;
 }
 
+// --- Helper Functions (変更なし) ---
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
@@ -38,6 +40,8 @@ function getTikTokVideoId(url: string): string | null {
 }
 const linkOrNewlineRegex = /((?:https?:\/\/)[^\s<>"'()]*[^\s<>"'().,?!])|(\n)/gi;
 
+// ▼▼▼ この ClickableBody 関数の定義を削除またはコメントアウトします ▼▼▼
+/*
 function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undefined, charLimit?: number }) {
   if (!body) { return <div className="text-sm mb-2"></div>; }
   const limitedBody = body.length > charLimit ? body.slice(0, charLimit) + '...' : body;
@@ -65,7 +69,7 @@ function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undef
       if (youtubeVideoId) {
         elements.push(
           <div key={`${startIndex}-youtube`} className="my-3 aspect-video max-w-full mx-auto" style={{ maxWidth: '560px' }}>
-            <iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/$${youtubeVideoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+            <iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/${youtubeVideoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
           </div>
         );
       } else if (isX) {
@@ -103,6 +107,9 @@ function ClickableBody({ body, charLimit = 1000 }: { body: string | null | undef
     </div>
   );
 }
+*/
+// ▲▲▲ ここまで削除またはコメントアウト ▲▲▲
+
 
 export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardProps) {
   const Container = isDetailPage ? 'div' : Link;
@@ -133,39 +140,31 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
     <Container
       {...containerProps}
       className={`
-        bg-slate-800 text-slate-100  rounded-2xl shadow 
+        bg-slate-800 text-slate-100  rounded-2xl shadow
         border border-slate-600  transition
-        ${isDetailPage 
-          ? 'block p-4' 
+        ${isDetailPage
+          ? 'block p-4'
           : 'hover:bg-slate-600 flex items-center gap-3 p-3 rounded-xl'
         }
       `}
     >
       {thread.image_url && (
         <div className={`relative flex-shrink-0 ${
-            isDetailPage 
+            isDetailPage
               ? 'w-[100px] h-[100px] mb-4 bg-slate-600 rounded-lg overflow-hidden flex items-center justify-center'
               : 'w-12 h-12 relative'
         }`}>
-          {isDetailPage ? (
-            <Image
-              src={thread.image_url}
-              alt="スレッド画像"
-              width={100}
-              height={100}
-              className="object-contain"
-              loading="lazy"
-            />
-          ) : (
-            <Image
-              src={thread.image_url}
-              alt="スレッド画像"
-              fill
-              className="object-contain rounded-md bg-slate-800"
-              sizes="48px"
-              priority={false}
-            />
-          )}
+          <Image
+            src={thread.image_url}
+            alt="スレッド画像"
+            fill={!isDetailPage}
+            width={isDetailPage ? 100 : undefined}
+            height={isDetailPage ? 100 : undefined}
+            className={`object-contain ${isDetailPage ? '' : 'rounded-md bg-slate-800'}`}
+            sizes={isDetailPage ? "100px" : "48px"}
+            priority={false}
+            loading={isDetailPage ? "lazy" : undefined}
+          />
         </div>
       )}
       <div className={`flex flex-col justify-between min-w-0 ${!isDetailPage ? 'flex-grow' : ''}`}>
@@ -173,7 +172,7 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
           <h2 className={`text-lg font-semibold mb-1 ${!isDetailPage ? 'truncate' : ''}`}>{thread.title}</h2>
           {isDetailPage ? (
             <div ref={bodyContainerRef}>
-              <ClickableBody body={thread.body} charLimit={1000} />
+              <ClickableBody body={thread.body} charLimit={1000} /> {/* ← インポートしたものが使われる */}
             </div>
           ) : (
             null

@@ -1,10 +1,9 @@
-// src/components/ClickableBody.tsx (新規作成)
+// src/components/ClickableBody.tsx (テキスト色修正版)
 'use client'; // Client Component
 
 import React from 'react';
-// import EmbedLoader from './EmbedLoader'; // oEmbed方式の場合はこちらを有効化
 
-// --- Helper Functions ---
+// --- Helper Functions (変更なし) ---
 function getYouTubeVideoId(url: string): string | null {
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
@@ -22,18 +21,17 @@ function getTikTokVideoId(url: string): string | null {
   return match && match[1] ? match[1] : null;
 }
 const linkOrNewlineRegex = /((?:https?:\/\/)[^\s<>"'()]*[^\s<>"'().,?!])|(\n)/gi;
-// const embedDomains = ['youtube.com', 'youtu.be', 'twitter.com', 'x.com', 'tiktok.com']; // oEmbed用
 
-// --- Component Props ---
+// --- Component Props (変更なし) ---
 interface Props {
   body: string | null | undefined;
-  charLimit?: number; // 文字数制限 (スレッド本体でのみ使用想定)
+  charLimit?: number;
 }
 
-// --- ClickableBody Component (公式ウィジェットスクリプト方式) ---
 export default function ClickableBody({ body, charLimit }: Props) {
   if (!body) {
-    return <div className="text-sm text-gray-800 whitespace-pre-wrap break-words mb-2"></div>;
+    // ★ text-gray-800 を削除 (親から文字色を継承)
+    return <div className="text-sm whitespace-pre-wrap break-words mb-2"></div>;
   }
 
   const limitedBody = (charLimit && body.length > charLimit) ? body.slice(0, charLimit) + '...' : body;
@@ -62,14 +60,19 @@ export default function ClickableBody({ body, charLimit }: Props) {
       if (youtubeVideoId) {
         elements.push( <div key={`${startIndex}-youtube`} className="my-3 aspect-video max-w-full mx-auto" style={{ maxWidth: '560px' }}><iframe className="w-full h-full rounded" src={`https://www.youtube.com/embed/${youtubeVideoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe></div> );
       } else if (isX) {
-        elements.push( <blockquote key={`${startIndex}-tweet`} className="twitter-tweet" data-theme="light" data-dnt="true"><a href={url}>ツイートを読み込み中... {url}</a></blockquote> );
+        // ★ X (Twitter) のテーマを dark に、リンク色も調整
+        elements.push( <blockquote key={`${startIndex}-tweet`} className="twitter-tweet" data-theme="dark" data-dnt="true"><a href={url} className="text-sky-400 hover:text-sky-300">ツイートを読み込み中... {url}</a></blockquote> );
       } else if (tiktokVideoId) {
-         elements.push( <blockquote key={`${startIndex}-tiktok`} className="tiktok-embed" cite={url} data-video-id={tiktokVideoId} style={{ maxWidth: '605px', minWidth: '325px' }}><section><a target="_blank" rel="noopener noreferrer" title="TikTok video" href={url}>TikTok 動画を読み込み中... {url}</a></section></blockquote> );
+         // ★ TikTok のリンク色も調整 (TikTok埋め込み自体がテーマを持つかは要確認)
+         elements.push( <blockquote key={`${startIndex}-tiktok`} className="tiktok-embed" cite={url} data-video-id={tiktokVideoId} style={{ maxWidth: '605px', minWidth: '325px' }}><section><a target="_blank" rel="noopener noreferrer" title="TikTok video" href={url} className="text-sky-400 hover:text-sky-300">TikTok 動画を読み込み中... {url}</a></section></blockquote> );
       } else {
         let href = url;
         if (href.toLowerCase().startsWith('www.')) { href = 'http://' + href; }
         if (!href.toLowerCase().startsWith('http')) { elements.push(<React.Fragment key={`text-${startIndex}`}>{url}</React.Fragment>); }
-        else { elements.push( <a key={`link-${startIndex}`} href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">{url}</a> ); }
+        else {
+          // ★ 通常のリンク色を明るめに変更
+          elements.push( <a key={`link-${startIndex}`} href={href} target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:text-sky-300 break-all">{url}</a> );
+        }
       }
     }
     lastIndex = linkOrNewlineRegex.lastIndex;
@@ -79,5 +82,6 @@ export default function ClickableBody({ body, charLimit }: Props) {
     elements.push(<React.Fragment key={`text-${lastIndex}`}>{limitedBody.substring(lastIndex)}</React.Fragment>);
   }
 
-  return ( <div className="text-sm text-gray-800 whitespace-pre-wrap break-words space-y-2">{elements}</div> );
+  // ★ text-gray-800 を削除 (親から文字色を継承)
+  return ( <div className="text-sm whitespace-pre-wrap break-words space-y-2">{elements}</div> );
 }
