@@ -1,7 +1,7 @@
 // /src/components/CreateThreadModal.tsx (no-explicit-any 修正版)
 'use client'
 
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react' // FormEvent, ChangeEvent をインポート
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import Image from 'next/image';
@@ -9,6 +9,20 @@ import Image from 'next/image';
 interface Props {
   isOpen: boolean
   onClose: () => void
+}
+
+// エラーオブジェクトがmessageプロパティを持つことを期待する型 (再利用可能なので別ファイルに切り出しても良い)
+interface ErrorWithMessage {
+  message: string;
+}
+
+function hasMessage(err: unknown): err is ErrorWithMessage {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof (err as ErrorWithMessage).message === 'string'
+  );
 }
 
 export default function CreateThreadModal({ isOpen, onClose }: Props) {
@@ -28,12 +42,12 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => { // ★ React.ChangeEvent を ChangeEvent に変更 (インポートするため)
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
   }
   const clearFile = () => setFile(null);
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => { // ★ React.FormEvent を FormEvent に変更 (インポートするため)
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (title.trim().length > 50) {
@@ -62,7 +76,7 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
         if (uploadError) throw new Error(`ファイルのアップロードに失敗しました: ${uploadError.message}`);
         console.log("Upload successful:", uploadData);
         const { data: urlData } = supabase.storage.from('thread-images').getPublicUrl(uploadData.path);
-        imageUrl = urlData?.publicUrl || uploadData.path; // publicUrl が null の場合も考慮
+        imageUrl = urlData?.publicUrl || uploadData.path;
         console.log("Image URL:", imageUrl);
       } else {
         const randomImages = ['/Random1.png', '/Random2.png', '/Random3.png', '/Random4.png'];
@@ -84,12 +98,12 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
       onClose();
       router.refresh();
 
-    } catch (error: unknown) { // ★ any から unknown に変更
+    } catch (error: unknown) {
       console.error("handleSubmit Error:", error);
       if (error instanceof Error) {
         alert(`エラーが発生しました。\n${error.message}`);
-      } else if (typeof error === 'object' && error !== null && 'message' in error && typeof (error as any).message === 'string') {
-        alert(`エラーが発生しました。\n${(error as any).message}`);
+      } else if (hasMessage(error)) { // ★ カスタム型ガードを使用
+        alert(`エラーが発生しました。\n${error.message}`);
       } else {
         alert(`予期せぬエラーが発生しました。`);
       }

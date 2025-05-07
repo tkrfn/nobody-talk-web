@@ -10,6 +10,20 @@ interface Props {
   threadId: string
 }
 
+// エラーオブジェクトがmessageプロパティを持つことを期待する型
+interface ErrorWithMessage {
+  message: string;
+}
+
+function hasMessage(err: unknown): err is ErrorWithMessage {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'message' in err &&
+    typeof (err as ErrorWithMessage).message === 'string'
+  );
+}
+
 export default function CreateCommentModal({ isOpen, onClose, threadId }: Props) {
   const [body, setBody] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,13 +54,12 @@ export default function CreateCommentModal({ isOpen, onClose, threadId }: Props)
       onClose();
       window.location.reload();
 
-    } catch (err: unknown) { // ★ any から unknown に変更
+    } catch (err: unknown) {
       console.error('コメント投稿エラー:', err);
-      // err が Error インスタンスで message プロパティを持つか確認
       if (err instanceof Error) {
         setError(err.message);
-      } else if (typeof err === 'object' && err !== null && 'message' in err && typeof (err as any).message === 'string') {
-        setError((err as any).message); // より安全なアクセス
+      } else if (hasMessage(err)) { // ★ カスタム型ガードを使用
+        setError(err.message);
       }
       else {
         setError('コメントの投稿中にエラーが発生しました。');
