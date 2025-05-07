@@ -1,4 +1,4 @@
-// src/app/page.tsx (no-unused-vars 'params' 修正版)
+// src/app/page.tsx (PageProps型エラー 再修正版)
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
@@ -8,11 +8,7 @@ import ThreadCard from '@/components/ThreadCard';
 import type { ThreadCardProps } from '@/components/ThreadCard';
 import FAB from '@/components/FAB';
 
-// ★ PageProps の型定義を修正 (params を削除またはオプショナルに)
-interface PageProps {
-  // params: { [key: string]: string | string[] | undefined }; // params が不要な場合はこの行を削除
-  searchParams?: { [key: string]: string | string[] | undefined };
-}
+// ★ interface PageProps の定義を削除
 
 async function fetchThreadsWithComments(
   page = 1,
@@ -66,8 +62,12 @@ async function fetchThreadsWithComments(
   return data || [];
 }
 
-// ★ Home コンポーネントの引数から params を削除
-export default async function Home({ searchParams }: PageProps) {
+// ★ Home コンポーネントの引数の型を直接指定
+export default async function Home({
+  searchParams,
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined };
+}) {
   const sortParam = searchParams?.sort;
   const sortKey = Array.isArray(sortParam) ? sortParam[0] ?? 'new' : sortParam ?? 'new';
 
