@@ -1,13 +1,27 @@
 // src/components/Button.tsx
-import { ComponentPropsWithoutRef } from 'react'
+'use client';
 
-export default function Button({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
+import { cn } from '@/lib/utils';
+import type { ButtonHTMLAttributes, PropsWithChildren } from 'react';
+
+type ButtonProps = PropsWithChildren<
+  ButtonHTMLAttributes<HTMLButtonElement>
+>;
+
+export default function Button({
+  className,
+  children,
+  ...props
+}: ButtonProps) {
   return (
     <button
-      onClick={onClick}
-      className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition"
+      className={cn(
+        'rounded-full bg-pink-500 px-4 py-2 text-white hover:bg-pink-600 disabled:opacity-50',
+        className
+      )}
+      {...props}
     >
       {children}
     </button>
-  )
+  );
 }

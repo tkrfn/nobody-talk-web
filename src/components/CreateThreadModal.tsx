@@ -1,18 +1,23 @@
-// /src/components/CreateThreadModal.tsx (修正版 - タイトル文字数制限追加)
-'use client'
+// src/components/CreateThreadModal.tsx
+'use client';
 
-import React, { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+import {
+  useState,
+  useEffect,
+  type FormEvent,
+  type ChangeEvent,
+} from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
 import Image from 'next/image';
 
 interface Props {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export default function CreateThreadModal({ isOpen, onClose }: Props) {
-  const router = useRouter()
+  const router = useRouter();
 
   const [title, setTitle] = useState('');
   const [name, setName] = useState('');
@@ -21,75 +26,55 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
   const [preview, setPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  /* 画像プレビュー */
   useEffect(() => {
-    if (!file) { setPreview(null); return }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setPreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
   }, [file]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (e: ChangeEvent<HTMLInputElement>) => {
     setFile(e.target.files?.[0] ?? null);
-  }
-  const clearFile = () => setFile(null);
+  };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
-    // ★ タイトル文字数チェックを追加
-    if (title.trim().length > 50) {
-      alert("タイトルは50文字以内で入力してください。");
-      return;
-    }
-    if (!title.trim()) { // タイトル必須チェック (required属性もあるが念のため)
-      alert("タイトルは必須です。");
-      return;
-    }
-    if (!body.trim()) { // 本文必須チェック
-      alert("本文は必須です。");
-      return;
-    }
-    if (submitting) return;
-
     setSubmitting(true);
-    let imageUrl: string | null = null;
-
     try {
-      // (ファイルアップロード処理は変更なし)
+      /* 画像アップロード */
+      let imageUrl: string | null = null;
       if (file) {
-        console.log("Uploading file:", file.name, file.type);
-        const ext = file.name.split('.').pop();
-        const fileName = `${crypto.randomUUID()}.${ext}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage.from('thread-images').upload(fileName, file, { contentType: file.type || 'application/octet-stream', upsert: false });
-        if (uploadError) throw new Error(`ファイルのアップロードに失敗しました: ${uploadError.message}`);
-        console.log("Upload successful:", uploadData);
-        const { data: urlData } = supabase.storage.from('thread-images').getPublicUrl(uploadData.path);
-        imageUrl = urlData?.publicUrl || uploadData.path;
-        console.log("Image URL:", imageUrl);
-      } else {
-        const randomImages = ['/Random1.png', '/Random2.png', '/Random3.png', '/Random4.png'];
-        imageUrl = randomImages[Math.floor(Math.random() * randomImages.length)];
-        console.log("No file selected, using random local image:", imageUrl);
+        const { data, error } = await supabase.storage
+          .from('thread-images')
+          .upload(`${Date.now()}_${file.name}`, file, {
+            cacheControl: '3600',
+            upsert: false,
+          });
+        if (error) throw error;
+        imageUrl = supabase.storage
+          .from('thread-images')
+          .getPublicUrl(data.path).data.publicUrl;
       }
 
-      const authorNameToInsert = name.trim() || '誰にも言えないスレ主';
+      const { error: insertError } = await supabase.from('threads').insert({
+        title,
+        body,
+        author_name: name,
+        image_url: imageUrl,
+      });
+      if (insertError) throw insertError;
 
-      // (データベース書き込み処理は変更なし)
-      console.log("Inserting into threads:", { title: title.trim(), author_name: authorNameToInsert, body: body.trim(), image_url: imageUrl });
-      const { error: insertError } = await supabase.from('threads').insert({ title: title.trim(), author_name: authorNameToInsert, body: body.trim(), image_url: imageUrl });
-      if (insertError) throw new Error(`データベースへの書き込みに失敗しました: ${insertError.message}`);
-
-      console.log("投稿成功！");
-      setTitle('');
-      setName('');
-      setBody('');
-      setFile(null);
       onClose();
       router.refresh();
-
-    } catch (error: any) {
-      console.error("handleSubmit Error:", error);
-      alert(`エラーが発生しました。\n${error.message}`);
+    } catch (error: unknown) {
+      console.error('handleSubmit Error:', error);
+      const message =
+        error instanceof Error ? error.message : '投稿に失敗しました。';
+      alert(message);
     } finally {
       setSubmitting(false);
     }
@@ -98,80 +83,63 @@ export default function CreateThreadModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md space-y-4 relative max-h-[90vh] overflow-y-auto">
-        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-white z-10"> × </button>
-        <h2 className="text-xl font-semibold text-center text-white">新規スレッド作成</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* スレッドタイトル (必須) */}
-          <div>
-            <label htmlFor="threadTitleModal" className="block mb-1 text-sm font-medium text-gray-200">
-              スレッドタイトル<span className="text-red-500 text-xs ml-1">※必須</span>
-            </label>
-            <input
-              id="threadTitleModal"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="スレッドのタイトルを入力 (50文字まで)" // Placeholder 更新
-              required
-              maxLength={50} // ★ maxLength 属性を追加
-              className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white focus:ring-pink-500 focus:border-pink-500"
-            />
-          </div>
-
-          {/* 投稿者名 (任意) */}
-          {/* ... (変更なし) ... */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-200">投稿者名</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="誰にも言えないスレ主さん"
-              className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white focus:ring-pink-500 focus:border-pink-500"
-            />
-          </div>
-
-
-          {/* 画像アップロード (任意) */}
-          {/* ... (変更なし) ... */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-200">画像 (任意)</label>
-            <input type="file" accept="image/*" onChange={handleFileChange} className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100"/>
-            {preview && (
-              <div className="mt-2 relative inline-block">
-                <Image src={preview} alt="preview" width={96} height={96} className="object-cover rounded"/>
-                <button type="button" onClick={clearFile} className="absolute -top-2 -right-2 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs leading-none"> × </button>
-              </div>
-            )}
-          </div>
-
-
-          {/* 本文 (必須) */}
-          {/* ... (変更なし) ... */}
-          <div>
-            <label className="block mb-1 text-sm font-medium text-gray-200">
-              本文<span className="text-red-500 text-xs ml-1">※必須</span>
-            </label>
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder="ここに本文を入力"
-              required
-              rows={5}
-              className="w-full px-3 py-2 border border-gray-600 rounded bg-gray-700 text-white resize-none focus:ring-pink-500 focus:border-pink-500"
-            />
-          </div>
-
-          {/* 投稿ボタン */}
-          {/* ... (変更なし) ... */}
-           <button type="submit" disabled={submitting} className="w-full py-2 bg-pink-500 rounded-lg text-white hover:bg-pink-600 transition disabled:opacity-50">
-            {submitting ? '投稿中…' : '投稿する'}
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/50">
+      <form
+        onSubmit={handleSubmit}
+        className="w-full max-w-xl space-y-4 rounded-lg bg-white p-6 shadow-xl"
+      >
+        <input
+          className="w-full rounded border p-2"
+          placeholder="タイトル"
+          maxLength={100}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
+        <textarea
+          className="h-32 w-full resize-none rounded border p-2"
+          placeholder="本文 (任意)"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+        />
+        <input
+          className="w-full rounded border p-2"
+          placeholder="名前 (任意)"
+          maxLength={30}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFile}
+          className="block w-full text-sm"
+        />
+        {preview && (
+          <Image
+            src={preview}
+            alt="preview"
+            width={300}
+            height={200}
+            className="mx-auto rounded"
+          />
+        )}
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded bg-gray-300 px-4 py-2"
+          >
+            キャンセル
           </button>
-
-        </form>
-      </div>
+          <button
+            disabled={submitting}
+            className="rounded bg-pink-500 px-4 py-2 text-white hover:bg-pink-600 disabled:opacity-50"
+          >
+            スレッドを投稿
+          </button>
+        </div>
+      </form>
     </div>
-  )
+  );
 }
