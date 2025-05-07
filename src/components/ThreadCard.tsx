@@ -68,7 +68,7 @@ export default function ThreadCard({ thread, isDetailPage = false }: ThreadCardP
   }, [isDetailPage, thread.body, thread.id]);
 
   const cardClassNames = `
-    bg-slate-700 text-slate-100  rounded-2xl shadow
+    bg-slate-800 text-slate-100  rounded-2xl shadow
     border border-slate-600  transition
     ${isDetailPage
       ? 'block p-4'

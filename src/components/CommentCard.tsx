@@ -45,7 +45,7 @@ export default function CommentCard({ comment, className = '', highlight }: Prop
     <> {/* ★ Fragmentで囲む */}
       <div
         className={`
-          bg-slate-700 text-slate-200 rounded-2xl shadow p-4 transition
+          bg-slate-800 text-slate-200 rounded-2xl shadow p-4 transition
           hover:bg-slate-600 border border-slate-600
           ${highlight ? 'ring-2 ring-offset-2 ring-pink-400' : ''}
           ${className}
