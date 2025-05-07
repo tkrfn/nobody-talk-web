@@ -6,7 +6,7 @@ import Image from 'next/image';
 import React, { useEffect, useRef } from 'react';
 import ClickableBody from './ClickableBody'; // ★ このインポートは残します
 
-interface ThreadCardProps {
+export interface ThreadCardProps {
   thread: {
     id: string;
     title: string;
