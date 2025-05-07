@@ -13,10 +13,11 @@ module.exports = {
 
         // 既存の色定義
         'header-pink': '#FF8C8E',     // ヘッダー/フッター用のピンク色
-        'background-cream': '#FFECDF', // 背景用のクリーム色
+        'background-cream': '#384151', // 背景用のクリーム色
 
         // ▼▼▼ 新しい枠線用の色定義を追加 ▼▼▼
-        'card-border': '#A77F64',    // ← カードの枠線用にこれを追加！
+        'card-border': '#ffffff',    // ← カードの枠線用にこれを追加！
+        'custom-header-footer': '#1e293b'
         // ▲▲▲ ここまで追加 ▲▲▲
       },
       // 以前に追加した可能性のある他の extend 設定 (例: borderRadius) はそのまま残してください

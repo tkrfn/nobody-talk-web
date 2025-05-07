@@ -7,8 +7,8 @@ export default function Tagline() {
     <div className="bg-white rounded-lg shadow p-4 text-center mb-4 border border-card-border">
     {/* ▲▲▲ ここに追加 ▲▲▲ */}
       <span className="text-[18px] text-gray-800 font-medium block mb-1 leading-tight">
-        誰にも言えないからこそ、<br />
-        ここで吐き出して楽になりましょう。
+        誰にも言えないことを、<br />
+        ここで吐き出しましょう。
       </span>
       <span className="text-xs text-gray-600 block mt-1">
         <span className="text-red-600 font-medium">注意:投稿に対する誹謗中傷は厳禁です。<br /></span>

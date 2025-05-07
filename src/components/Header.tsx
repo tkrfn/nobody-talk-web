@@ -6,7 +6,7 @@ import Link from 'next/link'
 export default function Header() {
   return (
     // ▼▼▼ header の className を変更 (背景色、パディング調整) ▼▼▼
-    <header className="w-full bg-header-pink shadow text-white p-4">
+    <header className="w-full bg-custom-header-footer shadow text-white p-4">
     {/* ▲▲▲ header の className を変更 ▲▲▲ */}
       <div className="max-w-md mx-auto flex items-center justify-between">
         {/* クリックでトップへ (文字色変更) */}

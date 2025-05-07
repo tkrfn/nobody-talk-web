@@ -4,3 +4,9 @@
 @tailwind utilities;
 
 /* ここにはカスタムCSSも書けますが、@apply は使わずに純粋なCSSだけにしてください */
+@layer base {
+  img {
+    object-fit: contain; /* または 'fill' や 'unset' など、期待するデフォルト値 */
+    /* 他に img タグにデフォルトで適用したいスタイルがあればここに追加 */
+  }
+}
