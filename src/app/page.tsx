@@ -1,18 +1,17 @@
-// src/app/page.tsx (PageProps 型エラー修正版)
+// src/app/page.tsx (no-unused-vars 'params' 修正版)
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { supabase } from '@/lib/supabaseClient';
-// import { Thread } from '@/types'; // 使用されていないためコメントアウトまたは削除
 import SortTabs from '@/components/SortTabs';
 import ThreadCard from '@/components/ThreadCard';
-import type { ThreadCardProps } from '@/components/ThreadCard'; // ThreadCardProps をインポート
+import type { ThreadCardProps } from '@/components/ThreadCard';
 import FAB from '@/components/FAB';
 
-// ★ PageProps の型定義を修正
+// ★ PageProps の型定義を修正 (params を削除またはオプショナルに)
 interface PageProps {
-  params: { [key: string]: string | string[] | undefined }; // params を追加 (Next.js App Routerの標準)
-  searchParams?: { [key: string]: string | string[] | undefined }; // searchParams をオプショナルにし、型をより正確に
+  // params: { [key: string]: string | string[] | undefined }; // params が不要な場合はこの行を削除
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 async function fetchThreadsWithComments(
@@ -43,7 +42,7 @@ async function fetchThreadsWithComments(
     const { data, error } = await supabase.rpc('get_threads_with_comment_count', {
       order_by_column: 'created_at',
       is_ascending: false,
-      page_limit: 100, // ランダム表示のため、ある程度多めに取得 (調整が必要)
+      page_limit: 100,
       page_offset: 0,
     });
     if (error) {
@@ -67,8 +66,8 @@ async function fetchThreadsWithComments(
   return data || [];
 }
 
-export default async function Home({ params, searchParams }: PageProps) { // ★ propsの受け取り方を変更
-  // searchParams が undefined の可能性を考慮し、オプショナルチェイニングと null合体演算子を使用
+// ★ Home コンポーネントの引数から params を削除
+export default async function Home({ searchParams }: PageProps) {
   const sortParam = searchParams?.sort;
   const sortKey = Array.isArray(sortParam) ? sortParam[0] ?? 'new' : sortParam ?? 'new';
 
