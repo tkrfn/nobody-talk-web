@@ -11,7 +11,7 @@ export default function TermsPage() {
   return (
     // 全体を囲む div (レイアウトやパディングを調整)
     // max-w-2xl で読みやすい幅に、mx-auto で中央寄せ
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-gray-800 leading-relaxed">
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-gray-lighten-2 leading-relaxed">
       <h1 className="text-3xl font-bold text-center mb-8">利用規約</h1>
 
       <p>

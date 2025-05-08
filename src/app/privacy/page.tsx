@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
 
   return (
     // 全体を囲む div (利用規約ページと同様のレイアウト)
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-gray-800 leading-relaxed">
+    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-gray-lighten-2 leading-relaxed">
       <h1 className="text-3xl font-bold text-center mb-8">プライバシーポリシー</h1>
 
       <section className="space-y-3">
@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
       <section className="space-y-3">
         <h2 className="text-xl font-semibold border-b pb-2">8. お問い合わせ</h2>
         <p>
-          本ポリシーに関するお問い合わせは、[ここにお問い合わせ方法を記載、例: お問い合わせフォームへのリンク] よりお願いいたします。
+          本ポリシーに関するお問い合わせは、お問い合わせページよりお願いいたします。
           {/* TODO: お問い合わせ方法へのリンクや情報を追記してください */}
         </p>
       </section>
@@ -112,13 +112,6 @@ export default function PrivacyPolicyPage() {
       <p className="text-sm text-gray-600 mt-8">
         制定日: {today}
       </p>
-
-      <div className="mt-12 p-4 border border-red-300 bg-red-50 rounded text-red-700 text-sm">
-        <p className="font-bold">【免責事項】</p>
-        <p>
-          私は AI であり、法律の専門家ではありません。上記は一般的な情報に基づいたプライバシーポリシーの文言案であり、法的助言ではありません。必ずご自身の責任で内容を確認し、必要に応じて弁護士等の専門家にご相談ください。
-        </p>
-      </div>
     </div>
   )
 }

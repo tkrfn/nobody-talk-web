@@ -15,7 +15,7 @@ export default function ContactPage() {
   return (
     // レイアウトは利用規約ページなどに合わせる
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6 text-gray-800 leading-relaxed">
-      <h1 className="text-3xl font-bold text-center mb-8">お問い合わせ</h1>
+      <h1 className="text-3xl font-bold text-gray-200 text-center mb-8">お問い合わせ</h1>
 
       {/* 説明文と連絡先をカードで囲む */}
       <section className="space-y-4 p-6 bg-white rounded-lg shadow border border-gray-200">
